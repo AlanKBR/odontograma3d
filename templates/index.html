@@ -3,6 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Odontograma 3D interativo com vistas vestibular e oclusal/lingual em quatro painéis." />
+  <meta name="keywords" content="odontograma, 3D, three.js, dentes, oclusal, vestibular, odontologia" />
     <title>Odontograma 3D</title>
     <link rel="stylesheet" href="/static/css/styles.css" />
     <script type="importmap">
@@ -22,12 +24,18 @@
   <div class="status" id="status">Carregando…</div>
     </header>
 
-    <main id="app">
-      <div class="viewport" id="viewport-vestibular">
-        <div class="label">Vista Vestibular</div>
+    <main id="app" class="grid-2x2">
+      <div class="viewport" id="viewport-vest-up">
+        <div class="label">Vestibular • Superior</div>
       </div>
-      <div class="viewport" id="viewport-oclusal">
-        <div class="label">Vista Oclusal/Lingual</div>
+      <div class="viewport" id="viewport-vest-low">
+        <div class="label">Vestibular • Inferior</div>
+      </div>
+      <div class="viewport" id="viewport-oclu-up">
+        <div class="label">Oclusal/Lingual • Superior</div>
+      </div>
+      <div class="viewport" id="viewport-oclu-low">
+        <div class="label">Oclusal/Lingual • Inferior</div>
       </div>
     </main>
 

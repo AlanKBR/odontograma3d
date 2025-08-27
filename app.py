@@ -8,9 +8,11 @@ MANIFEST_PATH = os.path.join(ROOT, 'tooth_manifest.json')
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
+
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/manifest.json')
 def manifest():

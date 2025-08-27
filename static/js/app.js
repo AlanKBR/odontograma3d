@@ -8,14 +8,45 @@ const isDebugMode = true;
 
 const statusEl = document.getElementById('status');
 const btnClear = document.getElementById('btn-clear');
-const viewVest = document.getElementById('viewport-vestibular');
-const viewOclu = document.getElementById('viewport-oclusal');
+// Four viewport containers from HTML
+const viewVestUp = document.getElementById('viewport-vest-up');
+const viewVestLow = document.getElementById('viewport-vest-low');
+const viewOcluUp = document.getElementById('viewport-oclu-up');
+const viewOcluLow = document.getElementById('viewport-oclu-low');
 
 // Two scenes to allow different transforms per view; geometries/materials are shared
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0b0f14);
 const sceneOclu = new THREE.Scene();
 sceneOclu.background = new THREE.Color(0x0b0f14);
+// Arch subgroups to selectively render upper/lower per viewport
+const vestUpperGroup = new THREE.Group();
+vestUpperGroup.name = 'vest-upper-group';
+const vestLowerGroup = new THREE.Group();
+vestLowerGroup.name = 'vest-lower-group';
+scene.add(vestUpperGroup);
+scene.add(vestLowerGroup);
+
+const ocluUpperGroup = new THREE.Group();
+ocluUpperGroup.name = 'oclu-upper-group';
+const ocluLowerGroup = new THREE.Group();
+ocluLowerGroup.name = 'oclu-lower-group';
+sceneOclu.add(ocluUpperGroup);
+sceneOclu.add(ocluLowerGroup);
+
+// Fixed absolute Y offsets per arch (top of native coordinates)
+// Per request: upper Y = -20, lower Y = 20
+const archOffsets = {
+  upperY: -20,
+  lowerY: 20,
+};
+
+function applyArchOffsets() {
+  vestUpperGroup.position.y = archOffsets.upperY;
+  ocluUpperGroup.position.y = archOffsets.upperY;
+  vestLowerGroup.position.y = archOffsets.lowerY;
+  ocluLowerGroup.position.y = archOffsets.lowerY;
+}
 
 // AxesHelper apenas para depuração, controlado por isDebugMode
 if (isDebugMode) {
@@ -47,51 +78,64 @@ const dir2b = new THREE.DirectionalLight(0xffffff, 0.5);
 dir2b.position.set(-60, -40, -80);
 sceneOclu.add(dir2b);
 
-// Cameras
-const camVest = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
-camVest.position.set(0, 20, 140);
-camVest.lookAt(0, 0, 0);
+// Cameras (four viewports)
+const camVestUp = new THREE.PerspectiveCamera(45, 1, 0.1, 2000);
+const camVestLow = new THREE.PerspectiveCamera(45, 1, 0.1, 2000);
+const camOcluUp = new THREE.PerspectiveCamera(45, 1, 0.1, 2000);
+const camOcluLow = new THREE.PerspectiveCamera(45, 1, 0.1, 2000);
+camVestUp.position.set(0, 20, 140);
+camVestLow.position.copy(camVestUp.position);
+camOcluUp.position.copy(camVestUp.position);
+camOcluLow.position.copy(camVestUp.position);
 
-const camOclu = new THREE.PerspectiveCamera(45, 1, 0.1, 2000);
-// Inicialmente, igual à vista vestibular; pode ser alterada depois se necessário
-camOclu.position.copy(camVest.position);
-camOclu.quaternion.copy(camVest.quaternion);
-camOclu.up.copy(camVest.up);
-camOclu.updateProjectionMatrix();
+// Renderers (one per viewport)
+const rendererVestUp = new THREE.WebGLRenderer({ antialias: true });
+const rendererVestLow = new THREE.WebGLRenderer({ antialias: true });
+const rendererOcluUp = new THREE.WebGLRenderer({ antialias: true });
+const rendererOcluLow = new THREE.WebGLRenderer({ antialias: true });
+[rendererVestUp, rendererVestLow, rendererOcluUp, rendererOcluLow].forEach(r => r.setPixelRatio(Math.min(window.devicePixelRatio, 2)));
+viewVestUp.appendChild(rendererVestUp.domElement);
+viewVestLow.appendChild(rendererVestLow.domElement);
+viewOcluUp.appendChild(rendererOcluUp.domElement);
+viewOcluLow.appendChild(rendererOcluLow.domElement);
 
-// Renderers
-const rendererVest = new THREE.WebGLRenderer({ antialias: true });
-const rendererOclu = new THREE.WebGLRenderer({ antialias: true });
-rendererVest.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-rendererOclu.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-viewVest.appendChild(rendererVest.domElement);
-viewOclu.appendChild(rendererOclu.domElement);
-
-// Controls
-const controlsVest = new OrbitControls(camVest, rendererVest.domElement);
-controlsVest.enableDamping = true;
-const controlsOclu = new OrbitControls(camOclu, rendererOclu.domElement);
-controlsOclu.enableDamping = true;
+// Controls per viewport
+const controlsVestUp = new OrbitControls(camVestUp, rendererVestUp.domElement);
+controlsVestUp.enableDamping = true;
+const controlsVestLow = new OrbitControls(camVestLow, rendererVestLow.domElement);
+controlsVestLow.enableDamping = true;
+const controlsOcluUp = new OrbitControls(camOcluUp, rendererOcluUp.domElement);
+controlsOcluUp.enableDamping = true;
+const controlsOcluLow = new OrbitControls(camOcluLow, rendererOcluLow.domElement);
+controlsOcluLow.enableDamping = true;
 // Mantém a navegação suave; a câmera será enquadrada em vista de planta
 
 // Resize handling
 function resize() {
-  const rect1 = viewVest.getBoundingClientRect();
-  const rect2 = viewOclu.getBoundingClientRect();
-  rendererVest.setSize(rect1.width, rect1.height, false);
-  rendererOclu.setSize(rect2.width, rect2.height, false);
-  camVest.aspect = rect1.width / Math.max(1, rect1.height);
-  camOclu.aspect = rect2.width / Math.max(1, rect2.height);
-  camVest.updateProjectionMatrix();
-  camOclu.updateProjectionMatrix();
+  const rVU = viewVestUp.getBoundingClientRect();
+  const rVL = viewVestLow.getBoundingClientRect();
+  const rOU = viewOcluUp.getBoundingClientRect();
+  const rOL = viewOcluLow.getBoundingClientRect();
+  rendererVestUp.setSize(rVU.width, rVU.height, false);
+  rendererVestLow.setSize(rVL.width, rVL.height, false);
+  rendererOcluUp.setSize(rOU.width, rOU.height, false);
+  rendererOcluLow.setSize(rOL.width, rOL.height, false);
+  camVestUp.aspect = rVU.width / Math.max(1, rVU.height);
+  camVestLow.aspect = rVL.width / Math.max(1, rVL.height);
+  camOcluUp.aspect = rOU.width / Math.max(1, rOU.height);
+  camOcluLow.aspect = rOL.width / Math.max(1, rOL.height);
+  camVestUp.updateProjectionMatrix();
+  camVestLow.updateProjectionMatrix();
+  camOcluUp.updateProjectionMatrix();
+  camOcluLow.updateProjectionMatrix();
 }
 window.addEventListener('resize', resize);
 
 // Raycasters
-const raycasterVest = new THREE.Raycaster();
-const mouseVest = new THREE.Vector2();
-const raycasterOclu = new THREE.Raycaster();
-const mouseOclu = new THREE.Vector2();
+const raycasterVestUp = new THREE.Raycaster();
+const raycasterVestLow = new THREE.Raycaster();
+const raycasterOcluUp = new THREE.Raycaster();
+const raycasterOcluLow = new THREE.Raycaster();
 
 // Tooth registry
 const toothGroups = new Map(); // toothId -> THREE.Group (vestibular)
@@ -183,15 +227,12 @@ function setupPicking(renderer, camera, raycaster, which) {
     // Only left click paints a single face
     if (ev.button !== 0) return;
     const ndc = screenToNDC(ev, renderer);
-    if (which === 'vest') mouseVest.copy(ndc); else mouseOclu.copy(ndc);
     raycaster.setFromCamera(ndc, camera);
-    const objects = [];
-    if (which === 'oclu') {
-      toothGroupsOclu.forEach((grp) => grp && objects.push(grp));
-    } else {
-      toothGroups.forEach((grp) => grp && objects.push(grp));
-    }
-    const hits = raycaster.intersectObjects(objects, true);
+    const roots = which === 'vest-up' ? [vestUpperGroup]
+      : which === 'vest-low' ? [vestLowerGroup]
+      : which === 'oclu-up' ? [ocluUpperGroup]
+      : [ocluLowerGroup];
+    const hits = raycaster.intersectObjects(roots, true);
     if (hits.length > 0) {
       const hit = hits[0];
       // Color entire part (OBJ file group) purple
@@ -204,9 +245,10 @@ function setupPicking(renderer, camera, raycaster, which) {
     }
   });
 }
-
-setupPicking(rendererVest, camVest, raycasterVest, 'vest');
-setupPicking(rendererOclu, camOclu, raycasterOclu, 'oclu');
+setupPicking(rendererVestUp, camVestUp, raycasterVestUp, 'vest-up');
+setupPicking(rendererVestLow, camVestLow, raycasterVestLow, 'vest-low');
+setupPicking(rendererOcluUp, camOcluUp, raycasterOcluUp, 'oclu-up');
+setupPicking(rendererOcluLow, camOcluLow, raycasterOcluLow, 'oclu-low');
 
 // Right-click paint mode: if started over a tooth, freeze camera and paint while moving
 function setupPainter(renderer, camera, raycaster, which, controls) {
@@ -214,20 +256,17 @@ function setupPainter(renderer, camera, raycaster, which, controls) {
   // prevent context menu on right-click over canvas
   renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
 
-  const getObjects = () => {
-    const arr = [];
-    if (which === 'oclu') {
-      toothGroupsOclu.forEach((g) => g && arr.push(g));
-    } else {
-      toothGroups.forEach((g) => g && arr.push(g));
-    }
-    return arr;
-  };
+  const getRoots = () => (
+    which === 'vest-up' ? [vestUpperGroup]
+    : which === 'vest-low' ? [vestLowerGroup]
+    : which === 'oclu-up' ? [ocluUpperGroup]
+    : [ocluLowerGroup]
+  );
 
   const paintAtEvent = (ev) => {
     const ndc = screenToNDC(ev, renderer);
     raycaster.setFromCamera(ndc, camera);
-    const hits = raycaster.intersectObjects(getObjects(), true);
+  const hits = raycaster.intersectObjects(getRoots(), true);
     if (hits.length > 0) {
       const h = hits[0];
       if (h.faceIndex != null) {
@@ -240,7 +279,7 @@ function setupPainter(renderer, camera, raycaster, which, controls) {
     if (ev.button !== 2) return; // only right button
     const ndc = screenToNDC(ev, renderer);
     raycaster.setFromCamera(ndc, camera);
-    const hits = raycaster.intersectObjects(getObjects(), true);
+  const hits = raycaster.intersectObjects(getRoots(), true);
     // Start painting only if clicking over a tooth; otherwise let OrbitControls pan
     if (hits.length > 0) {
       painting = true;
@@ -266,9 +305,10 @@ function setupPainter(renderer, camera, raycaster, which, controls) {
   renderer.domElement.addEventListener('pointerup', stopPainting);
   renderer.domElement.addEventListener('pointerleave', stopPainting);
 }
-
-setupPainter(rendererVest, camVest, raycasterVest, 'vest', controlsVest);
-setupPainter(rendererOclu, camOclu, raycasterOclu, 'oclu', controlsOclu);
+setupPainter(rendererVestUp, camVestUp, raycasterVestUp, 'vest-up', controlsVestUp);
+setupPainter(rendererVestLow, camVestLow, raycasterVestLow, 'vest-low', controlsVestLow);
+setupPainter(rendererOcluUp, camOcluUp, raycasterOcluUp, 'oclu-up', controlsOcluUp);
+setupPainter(rendererOcluLow, camOcluLow, raycasterOcluLow, 'oclu-low', controlsOcluLow);
 
 // Load manifest and then load all permanent teeth (Step 5)
 async function loadManifest() {
@@ -376,65 +416,14 @@ function computeCrownBox(root) {
   return has ? box : null;
 }
 
-function mean(arr) { return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null; }
-
-function alignAnteriorHorizon() {
-  // Collect posterior occlusal Z (max Z of crowns) per arch
-  const upPostZ = [];
-  const lowPostZ = [];
-  toothGroupsOclu.forEach((pivot, toothId) => {
-    const setKey = getToothSet(toothId);
-    if (setKey === 'UP_POST' || setKey === 'LOW_POST') {
-      const box = computeCrownBox(pivot);
-      if (box) {
-        if (setKey === 'UP_POST') upPostZ.push(box.max.z);
-        else lowPostZ.push(box.max.z);
-      }
-    }
-  });
-  const refUpZ = mean(upPostZ);
-  const refLowZ = mean(lowPostZ);
-  // Align anterior occlusal Z (max) to their arch's posterior ref
-  toothGroupsOclu.forEach((pivot, toothId) => {
-    const setKey = getToothSet(toothId);
-    if (setKey === 'UP_ANT' && refUpZ != null) {
-      const box = computeCrownBox(pivot);
-      if (box) {
-        const dz = refUpZ - box.max.z;
-        pivot.position.z += dz;
-      }
-    } else if (setKey === 'LOW_ANT' && refLowZ != null) {
-      const box = computeCrownBox(pivot);
-      if (box) {
-        const dz = refLowZ - box.max.z;
-        pivot.position.z += dz;
-      }
-    }
-  });
-}
-
-function alignOcclusalToVestCenters() {
-  // Align each occlusal tooth pivot so its crown center Y and Z match vestibular crown center
-  toothGroupsOclu.forEach((pivot, toothId) => {
-    const vest = toothGroups.get(toothId);
-    if (!vest) return;
-    const boxVest = computeCrownBox(vest);
-    const boxOclu = computeCrownBox(pivot);
-    if (!boxVest || !boxOclu) return;
-    const centerVest = boxVest.getCenter(new THREE.Vector3());
-    const centerOclu = boxOclu.getCenter(new THREE.Vector3());
-    const dy = centerVest.y - centerOclu.y;
-    const dz = centerVest.z - centerOclu.z;
-    pivot.position.y += dy;
-    pivot.position.z += dz;
-  });
-}
+// (Alignment helpers removed per request)
 
 // Per-arch debug colors removed; keep single neutral color
 
 function cloneNodeForOclu(node) {
   const nodeClone = node.clone(false);
   nodeClone.name = node.name;
+  nodeClone.userData = { ...node.userData };
   if (node.isMesh) {
     const meshClone = new THREE.Mesh(node.geometry, node.material);
     meshClone.name = node.name;
@@ -442,6 +431,7 @@ function cloneNodeForOclu(node) {
     meshClone.quaternion.copy(node.quaternion);
     meshClone.scale.copy(node.scale);
     meshClone.layers.mask = node.layers.mask;
+    meshClone.userData = { ...node.userData };
     return meshClone;
   }
   // Copy transforms for non-mesh nodes as well
@@ -473,15 +463,15 @@ async function loadTooth(toothId, manifest) {
   // Load sequentially to keep it simple; can be parallelized if needed
   for (const fname of parts) {
     try {
-    const obj = await objLoader.loadAsync(fname);
-    // Tag this loaded OBJ group with partName so we can color whole part later
-    obj.userData.partName = fname;
+      const obj = await objLoader.loadAsync(fname);
+      // Tag this loaded OBJ group with partName so we can color whole part later
+      obj.userData.partName = fname;
       obj.traverse((node) => {
         if (node.isMesh) {
           const mat = baseMaterial.clone();
           node.material = mat; // per-mesh material clone
           ensureVertexColors(node.geometry);
-      node.userData.partName = fname;
+          node.userData.partName = fname;
           // Keep neutral base color (no per-arch coloring)
           node.castShadow = false;
           node.receiveShadow = false;
@@ -503,7 +493,7 @@ async function loadTooth(toothId, manifest) {
   // Do not apply legacy position offsets; keep native OBJ coordinates
 
   toothGroups.set(toothId, group);
-  scene.add(group);
+  if (isUpper(toothId)) vestUpperGroup.add(group); else vestLowerGroup.add(group);
   // Build and add occlusal/lingual clone group with requested rotations
   const ocluGroup = new THREE.Group();
   ocluGroup.name = `tooth-${toothId}-oclu`;
@@ -513,19 +503,54 @@ async function loadTooth(toothId, manifest) {
   });
   // Compute center to rotate around tooth center, not world origin
   ocluGroup.updateWorldMatrix(true, true);
-  const boxTooth = new THREE.Box3().setFromObject(ocluGroup);
-  const center = boxTooth.getCenter(new THREE.Vector3());
+  // Use crown-only bounding box to determine pivot center (ignore roots)
+  let center = null;
+  const crownBox = computeCrownBox(ocluGroup);
+  if (crownBox) {
+    center = crownBox.getCenter(new THREE.Vector3());
+  } else {
+    // Fallback to full object bounds if crown box is unavailable
+    const fullBox = new THREE.Box3().setFromObject(ocluGroup);
+    center = fullBox.getCenter(new THREE.Vector3());
+  }
   const pivot = new THREE.Group();
   pivot.name = `tooth-${toothId}-oclu-pivot`;
   // Move child so its local origin is at center; place pivot at center
   ocluGroup.position.sub(center);
   pivot.position.copy(center);
   pivot.add(ocluGroup);
+  // Hide roots in occlusal clone
+  pivot.traverse((n) => {
+    if (n.isMesh) {
+      const p = n.userData?.partName || '';
+      const isRoot = /\bR_/i.test(p) || /Raiz|Canal/i.test(p);
+      if (isRoot) n.visible = false;
+    }
+  });
   // Apply simplified absolute + relative transform (keeps position)
   applyOcclusalTransform(toothId, pivot);
   toothGroupsOclu.set(toothId, pivot);
-  sceneOclu.add(pivot);
+  if (isUpper(toothId)) ocluUpperGroup.add(pivot); else ocluLowerGroup.add(pivot);
   return group;
+}
+
+// Align only anterior teeth in occlusal view, using crown centers (ignore roots)
+function alignOcclusalAnteriorByCrowns() {
+  toothGroupsOclu.forEach((pivot, toothId) => {
+  // Only incisors (centrais e laterais): 11,12,21,22,31,32,41,42
+  const n = Number(toothId);
+  const isIncisor = [11,12,21,22,31,32,41,42].includes(n);
+  if (!isIncisor) return;
+    const vest = toothGroups.get(toothId);
+    if (!vest) return;
+    const boxVest = computeCrownBox(vest);
+    const boxOclu = computeCrownBox(pivot);
+    if (!boxVest || !boxOclu) return;
+    const cVest = boxVest.getCenter(new THREE.Vector3());
+    const cOclu = boxOclu.getCenter(new THREE.Vector3());
+    pivot.position.y += (cVest.y - cOclu.y);
+    pivot.position.z += (cVest.z - cOclu.z);
+  });
 }
 
 // Find the ancestor group that represents a single OBJ part load
@@ -605,6 +630,59 @@ function frameSceneFront(sceneRef, camera, controls) {
   }
 }
 
+function frameGroupFront(group, camera, controls) {
+  const box = new THREE.Box3().setFromObject(group);
+  if (!box.isEmpty()) {
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const halfY = size.y * 0.5;
+    const halfX = size.x * 0.5;
+    const vFOV = (Math.PI * camera.fov) / 360;
+    let distH = halfY / Math.tan(vFOV);
+    let distW = halfX / (Math.tan(vFOV) * Math.max(0.0001, camera.aspect));
+    const distance = Math.max(distH, distW) * 1.25;
+    camera.up.set(0, 1, 0);
+    camera.position.set(center.x, center.y, center.z + distance);
+    camera.lookAt(center);
+    camera.updateProjectionMatrix();
+    if (controls) {
+      controls.target.copy(center);
+      controls.update();
+    }
+  }
+}
+
+// Frame cameras so that the view is centered at the world origin (0,0,0)
+function frameSceneToOrigin(sceneRef, camera, controls) {
+  const box = new THREE.Box3().setFromObject(sceneRef);
+  if (!box.isEmpty()) {
+    const size = box.getSize(new THREE.Vector3());
+    const halfY = size.y * 0.5;
+    const halfX = size.x * 0.5;
+    const vFOV = (Math.PI * camera.fov) / 360;
+    const distH = halfY / Math.tan(vFOV);
+    const distW = halfX / (Math.tan(vFOV) * Math.max(0.0001, camera.aspect));
+    const distance = Math.max(distH, distW) * 1.25;
+    camera.up.set(0, 1, 0);
+    camera.position.set(0, 0, distance);
+    camera.lookAt(0, 0, 0);
+    camera.updateProjectionMatrix();
+    if (controls) {
+      controls.target.set(0, 0, 0);
+      controls.update();
+    }
+  }
+}
+
+function reframeAll() {
+  // Center all viewports on the world origin
+  frameSceneToOrigin(scene, camVestUp, controlsVestUp);
+  frameSceneToOrigin(scene, camVestLow, controlsVestLow);
+  frameSceneToOrigin(sceneOclu, camOcluUp, controlsOcluUp);
+  frameSceneToOrigin(sceneOclu, camOcluLow, controlsOcluLow);
+}
+
+
 function clearMarks() {
   // Remove transient 3D markers
   for (const m of transientMarkers.splice(0)) {
@@ -617,18 +695,36 @@ function clearMarks() {
     }
   };
   scene.traverse(restoreColor);
+  sceneOclu.traverse(restoreColor);
   statusEl.textContent = 'Marcas limpas';
 }
 
 btnClear?.addEventListener('click', clearMarks);
 
+// No offset UI; offsets are fixed in code
+
 
 function animate() {
   requestAnimationFrame(animate);
-  controlsVest.update();
-  controlsOclu.update();
-  rendererVest.render(scene, camVest);
-  rendererOclu.render(sceneOclu, camOclu);
+  controlsVestUp.update();
+  controlsVestLow.update();
+  controlsOcluUp.update();
+  controlsOcluLow.update();
+  // Vestibular Upper
+  vestUpperGroup.visible = true; vestLowerGroup.visible = false;
+  rendererVestUp.render(scene, camVestUp);
+  // Vestibular Lower
+  vestUpperGroup.visible = false; vestLowerGroup.visible = true;
+  rendererVestLow.render(scene, camVestLow);
+  // Oclusal Upper
+  ocluUpperGroup.visible = true; ocluLowerGroup.visible = false;
+  rendererOcluUp.render(sceneOclu, camOcluUp);
+  // Oclusal Lower
+  ocluUpperGroup.visible = false; ocluLowerGroup.visible = true;
+  rendererOcluLow.render(sceneOclu, camOcluLow);
+  // Restore visibility so layout-dependent ops still see all
+  vestUpperGroup.visible = true; vestLowerGroup.visible = true;
+  ocluUpperGroup.visible = true; ocluLowerGroup.visible = true;
 }
 
 (async () => {
@@ -642,18 +738,16 @@ function animate() {
       await loadTooth(id, manifest);
     }
   statusEl.textContent = 'Odontograma carregado. Clique para marcar.';
-    // Adjust cameras to fit the full scene
-  // Layers: 1ª vista mostra raízes, 2ª oculta
-  camVest.layers.enable(0);
-  camVest.layers.enable(1);
-  camOclu.layers.enable(0);
-  camOclu.layers.disable(1);
-
-  // Alinhar centros Y/Z das coroas da vista oclusal com a vestibular
-  alignOcclusalToVestCenters();
-  // Enquadrar ambas as vistas alinhadas ao eixo Z (frontal)
-  frameSceneFront(scene, camVest, controlsVest);
-  frameSceneFront(sceneOclu, camOclu, controlsOclu);
+  // Layers: vestibular shows roots; oclusal hides roots
+  camVestUp.layers.enable(0); camVestUp.layers.enable(1);
+  camVestLow.layers.enable(0); camVestLow.layers.enable(1);
+  camOcluUp.layers.enable(0); camOcluUp.layers.disable(1);
+  camOcluLow.layers.enable(0); camOcluLow.layers.disable(1);
+  // Align incisors in occlusal/lingual based solely on crown centers
+  alignOcclusalAnteriorByCrowns();
+  // Apply initial arch offsets (0 by default) and frame all
+  applyArchOffsets();
+  reframeAll();
   } catch (e) {
     console.error(e);
     statusEl.textContent = 'Erro: ' + e.message;
