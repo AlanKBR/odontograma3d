@@ -1,0 +1,1099 @@
+{
+  "teeth": {
+    "11": {
+      "C": [
+        "D11C_CL.obj",
+        "D11C_CV.obj",
+        "D11C_D.obj",
+        "D11C_F.obj",
+        "D11C_I.obj",
+        "D11C_L.obj",
+        "D11C_M.obj"
+      ],
+      "R": [
+        "D11R_Canal.obj",
+        "D11R_Raiz.obj"
+      ],
+      "N": [
+        "D11N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": -4.430408835718765,
+        "y": 27.233070201930044,
+        "z": 0.07844769112223754
+      }
+    },
+    "12": {
+      "C": [
+        "D12C_CL.obj",
+        "D12C_CV.obj",
+        "D12C_CV0.obj",
+        "D12C_D.obj",
+        "D12C_I.obj",
+        "D12C_L.obj",
+        "D12C_M.obj"
+      ],
+      "R": [
+        "D12R_Canal.obj",
+        "D12R_Raiz.obj"
+      ],
+      "N": [
+        "D12N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": -12.352709335162317,
+        "y": 26.557010755421203,
+        "z": 0.0369794775134429
+      }
+    },
+    "13": {
+      "C": [
+        "D13C_CL.obj",
+        "D13C_CV.obj",
+        "D13C_D.obj",
+        "D13C_F.obj",
+        "D13C_I.obj",
+        "D13C_L.obj",
+        "D13C_M.obj"
+      ],
+      "R": [
+        "D13R_Canal.obj",
+        "D13R_Raiz.obj"
+      ],
+      "N": [
+        "D13N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": -19.32802624052221,
+        "y": 28.01377685383113,
+        "z": 0.07902687546357191
+      }
+    },
+    "14": {
+      "C": [
+        "D14C_B.obj",
+        "D14C_CDL.obj",
+        "D14C_CDV.obj",
+        "D14C_CML.obj",
+        "D14C_CMV.obj",
+        "D14C_D.obj",
+        "D14C_FDL.obj",
+        "D14C_FDV.obj",
+        "D14C_FML.obj",
+        "D14C_FMV.obj",
+        "D14C_L.obj",
+        "D14C_M.obj",
+        "D14C_O.obj",
+        "D14C_V.obj"
+      ],
+      "R": [
+        "D14R_Canal.obj",
+        "D14R_Raiz.obj"
+      ],
+      "N": [
+        "D14N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": -26.789029260917946,
+        "y": 26.011341020796035,
+        "z": 0.02970365614491706
+      }
+    },
+    "15": {
+      "C": [
+        "D15C_B.obj",
+        "D15C_CDL.obj",
+        "D15C_CDV.obj",
+        "D15C_CML.obj",
+        "D15C_CMV.obj",
+        "D15C_CV.obj",
+        "D15C_D.obj",
+        "D15C_DL.obj",
+        "D15C_DV.obj",
+        "D15C_L.obj",
+        "D15C_M.obj",
+        "D15C_ML.obj",
+        "D15C_MV.obj",
+        "D15C_O.obj"
+      ],
+      "R": [
+        "D15R_Canal.obj",
+        "D15R_Raiz.obj"
+      ],
+      "N": [
+        "D15N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": -33.948375514371214,
+        "y": 24.251453061183867,
+        "z": 0.14929501665047482
+      }
+    },
+    "16": {
+      "C": [
+        "D16C_B.obj",
+        "D16C_CDP.obj",
+        "D16C_CDV.obj",
+        "D16C_CL.obj",
+        "D16C_CMP.obj",
+        "D16C_CMV.obj",
+        "D16C_CV.obj",
+        "D16C_D.obj",
+        "D16C_L.obj",
+        "D16C_M.obj",
+        "D16C_O.obj"
+      ],
+      "R": [
+        "D16R_Canal.obj",
+        "D16R_Raiz.obj"
+      ],
+      "N": [
+        "D16N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": -42.66219226420338,
+        "y": 25.94092536915717,
+        "z": 0.10811406917302858
+      }
+    },
+    "17": {
+      "C": [
+        "D17C_B.obj",
+        "D17C_CDL.obj",
+        "D17C_CDV.obj",
+        "D17C_CL.obj",
+        "D17C_CML.obj",
+        "D17C_CMV.obj",
+        "D17C_D.obj",
+        "D17C_L.obj",
+        "D17C_M.obj",
+        "D17C_O.obj",
+        "D17C_V.obj"
+      ],
+      "R": [
+        "D17R_Canal.obj",
+        "D17R_Raiz.obj"
+      ],
+      "N": [
+        "D17N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": -52.831626151794715,
+        "y": 25.536244892638567,
+        "z": 0.2091181471256855
+      }
+    },
+    "18": {
+      "C": [
+        "D18C_B.obj",
+        "D18C_CDP.obj",
+        "D18C_CDV.obj",
+        "D18C_CL.obj",
+        "D18C_CMP.obj",
+        "D18C_CMV.obj",
+        "D18C_D.obj",
+        "D18C_L.obj",
+        "D18C_M.obj",
+        "D18C_O.obj",
+        "D18C_V.obj"
+      ],
+      "R": [
+        "D18R_Canal.obj",
+        "D18R_Raiz.obj"
+      ],
+      "N": [
+        "D18N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": -62.02629689767327,
+        "y": 24.965935009745923,
+        "z": 0.32661749868010487
+      }
+    },
+    "21": {
+      "C": [
+        "D21C_CL.obj",
+        "D21C_CV.obj",
+        "D21C_D.obj",
+        "D21C_F.obj",
+        "D21C_I.obj",
+        "D21C_L.obj",
+        "D21C_M.obj"
+      ],
+      "R": [
+        "D21R_Canal.obj",
+        "D21R_Raiz.obj"
+      ],
+      "N": [
+        "D21N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": 4.517892152196219,
+        "y": 27.75243873489337,
+        "z": 0.07694412252436486
+      }
+    },
+    "22": {
+      "C": [
+        "D22C_CL.obj",
+        "D22C_CV.obj",
+        "D22C_CV1.obj",
+        "D22C_D.obj",
+        "D22C_I.obj",
+        "D22C_L.obj",
+        "D22C_M.obj"
+      ],
+      "R": [
+        "D22R_Canal.obj",
+        "D22R_Raiz.obj"
+      ],
+      "N": [
+        "D22N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": 12.439153424015752,
+        "y": 26.557010755421203,
+        "z": 0.03697926487942034
+      }
+    },
+    "23": {
+      "C": [
+        "D23C_CL.obj",
+        "D23C_CV.obj",
+        "D23C_D.obj",
+        "D23C_F.obj",
+        "D23C_I.obj",
+        "D23C_L.obj",
+        "D23C_M.obj"
+      ],
+      "R": [
+        "D23R_Canal.obj",
+        "D23R_Raiz.obj"
+      ],
+      "N": [
+        "D23N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": 19.41446728537781,
+        "y": 28.013776889955153,
+        "z": 0.07902676868225321
+      }
+    },
+    "24": {
+      "C": [
+        "D24C_B.obj",
+        "D24C_CDL.obj",
+        "D24C_CDV.obj",
+        "D24C_CML.obj",
+        "D24C_CMV.obj",
+        "D24C_D.obj",
+        "D24C_FDL.obj",
+        "D24C_FDV.obj",
+        "D24C_FML.obj",
+        "D24C_FMV.obj",
+        "D24C_L.obj",
+        "D24C_M.obj",
+        "D24C_O.obj",
+        "D24C_V.obj"
+      ],
+      "R": [
+        "D24R_Canal.obj",
+        "D24R_Raiz.obj"
+      ],
+      "N": [
+        "D24N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": 26.875469671355354,
+        "y": 26.01134090423584,
+        "z": 0.029703444886823464
+      }
+    },
+    "25": {
+      "C": [
+        "D25C_B.obj",
+        "D25C_CDL.obj",
+        "D25C_CDV.obj",
+        "D25C_CML.obj",
+        "D25C_CMV.obj",
+        "D25C_CV.obj",
+        "D25C_D.obj",
+        "D25C_DL.obj",
+        "D25C_DV.obj",
+        "D25C_L.obj",
+        "D25C_M.obj",
+        "D25C_ML.obj",
+        "D25C_MV.obj",
+        "D25C_O.obj"
+      ],
+      "R": [
+        "D25R_Canal.obj",
+        "D25R_Raiz.obj"
+      ],
+      "N": [
+        "D25N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": 34.03481647322218,
+        "y": 24.251452574055257,
+        "z": 0.1492957086527811
+      }
+    },
+    "26": {
+      "C": [
+        "D26C_B.obj",
+        "D26C_CDP.obj",
+        "D26C_CDV.obj",
+        "D26C_CL.obj",
+        "D26C_CMP.obj",
+        "D26C_CMV.obj",
+        "D26C_CV.obj",
+        "D26C_D.obj",
+        "D26C_L.obj",
+        "D26C_M.obj",
+        "D26C_O.obj"
+      ],
+      "R": [
+        "D26R_Canal.obj",
+        "D26R_Raiz.obj"
+      ],
+      "N": [
+        "D26N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": 42.74863937187986,
+        "y": 25.94092541822589,
+        "z": 0.10811389906483541
+      }
+    },
+    "27": {
+      "C": [
+        "D27C_B.obj",
+        "D27C_CDL.obj",
+        "D27C_CDV.obj",
+        "D27C_CL.obj",
+        "D27C_CML.obj",
+        "D27C_CMV.obj",
+        "D27C_D.obj",
+        "D27C_L.obj",
+        "D27C_M.obj",
+        "D27C_O.obj",
+        "D27C_V.obj"
+      ],
+      "R": [
+        "D27R_Canal.obj",
+        "D27R_Raiz.obj"
+      ],
+      "N": [
+        "D27N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": 52.91807411685926,
+        "y": 25.536244907335604,
+        "z": 0.20911789391226004
+      }
+    },
+    "28": {
+      "C": [
+        "D28C_B.obj",
+        "D28C_CDP.obj",
+        "D28C_CDV.obj",
+        "D28C_CL.obj",
+        "D28C_CMP.obj",
+        "D28C_CMV.obj",
+        "D28C_D.obj",
+        "D28C_L.obj",
+        "D28C_M.obj",
+        "D28C_O.obj",
+        "D28C_V.obj"
+      ],
+      "R": [
+        "D28R_Canal.obj",
+        "D28R_Raiz.obj"
+      ],
+      "N": [
+        "D28N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": 62.11274352879592,
+        "y": 24.965935018700613,
+        "z": 0.3266174101148259
+      }
+    },
+    "31": {
+      "C": [
+        "598.obj",
+        "598_1.obj",
+        "601.obj",
+        "601_1.obj",
+        "D31C_CL.obj",
+        "D31C_CV.obj",
+        "D31C_F.obj",
+        "D31C_I.obj",
+        "D31C_L.obj"
+      ],
+      "R": [
+        "D31R_Canal.obj",
+        "D31R_Raiz.obj"
+      ],
+      "N": [
+        "D31N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": 2.792715893467508,
+        "y": -23.509471792046742,
+        "z": 0.0007410661810723752
+      }
+    },
+    "32": {
+      "C": [
+        "608.obj",
+        "608_1.obj",
+        "611.obj",
+        "611_1.obj",
+        "D32C_CL.obj",
+        "D32C_CV.obj",
+        "D32C_F.obj",
+        "D32C_I.obj",
+        "D32C_L.obj"
+      ],
+      "R": [
+        "D32R_Canal.obj",
+        "D32R_Raiz.obj"
+      ],
+      "N": [
+        "D32N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": 9.089286576996567,
+        "y": -23.509471797174022,
+        "z": 0.0007410552856009254
+      }
+    },
+    "33": {
+      "C": [
+        "D33C_CL.obj",
+        "D33C_CV.obj",
+        "D33C_D.obj",
+        "D33C_F.obj",
+        "D33C_I.obj",
+        "D33C_L.obj",
+        "D33C_M.obj",
+        "D33C_V.obj"
+      ],
+      "R": [
+        "D33R_Canal.obj",
+        "D33R_Raiz.obj"
+      ],
+      "N": [
+        "D33N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": 16.014615141445322,
+        "y": -23.643318584171666,
+        "z": 0.08526534323243731
+      }
+    },
+    "34": {
+      "C": [
+        "D34C_B.obj",
+        "D34C_CL.obj",
+        "D34C_CV.obj",
+        "D34C_D.obj",
+        "D34C_DV.obj",
+        "D34C_L.obj",
+        "D34C_M.obj",
+        "D34C_MV.obj",
+        "D34C_O.obj",
+        "D34C_V.obj"
+      ],
+      "R": [
+        "D34R_Canal.obj",
+        "D34R_Raiz.obj"
+      ],
+      "N": [
+        "D34N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": 23.974833298952152,
+        "y": -23.577413538174753,
+        "z": -0.17146663603600296
+      }
+    },
+    "35": {
+      "C": [
+        "D35C_ACL.obj",
+        "D35C_B.obj",
+        "D35C_CL.obj",
+        "D35C_CUV.obj",
+        "D35C_D.obj",
+        "D35C_DV.obj",
+        "D35C_L.obj",
+        "D35C_M.obj",
+        "D35C_MV.obj",
+        "D35C_O.obj",
+        "D35C_V.obj"
+      ],
+      "R": [
+        "D35R_Canal.obj",
+        "D35R_Raiz.obj"
+      ],
+      "N": [
+        "D35N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": 32.03882244298345,
+        "y": -22.107736735905764,
+        "z": -0.4925709036430427
+      }
+    },
+    "36": {
+      "C": [
+        "D36C_B.obj",
+        "D36C_CDL.obj",
+        "D36C_CDV.obj",
+        "D36C_CL.obj",
+        "D36C_CML.obj",
+        "D36C_CMV.obj",
+        "D36C_D.obj",
+        "D36C_L.obj",
+        "D36C_M.obj",
+        "D36C_O.obj",
+        "D36C_V.obj"
+      ],
+      "R": [
+        "D36R_Canal.obj",
+        "D36R_Raiz.obj"
+      ],
+      "N": [
+        "D36N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": 41.79507188634858,
+        "y": -22.056947489487396,
+        "z": 0.028071234778608394
+      }
+    },
+    "37": {
+      "C": [
+        "D37C_B.obj",
+        "D37C_CDL.obj",
+        "D37C_CDV.obj",
+        "D37C_CL.obj",
+        "D37C_CML.obj",
+        "D37C_CMV.obj",
+        "D37C_D.obj",
+        "D37C_L.obj",
+        "D37C_M.obj",
+        "D37C_O.obj",
+        "D37C_V.obj"
+      ],
+      "R": [
+        "D37R_Canal.obj",
+        "D37R_Raiz.obj"
+      ],
+      "N": [
+        "D37N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": 53.388124292547054,
+        "y": -21.18821944453367,
+        "z": -0.004890721129784323
+      }
+    },
+    "38": {
+      "C": [
+        "544.obj",
+        "544_1.obj",
+        "547.obj",
+        "547_1.obj",
+        "D38C_B.obj",
+        "D38C_CDL.obj",
+        "D38C_CDV.obj",
+        "D38C_CML.obj",
+        "D38C_CMV.obj",
+        "D38C_FCL.obj",
+        "D38C_L.obj",
+        "D38C_O.obj",
+        "D38C_V.obj"
+      ],
+      "R": [
+        "D38R_Canal.obj",
+        "D38R_Raiz.obj"
+      ],
+      "N": [
+        "D38N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": 64.20389037482482,
+        "y": -21.197560517376036,
+        "z": 0.016351440560237636
+      }
+    },
+    "41": {
+      "C": [
+        "237.obj",
+        "237_1.obj",
+        "241.obj",
+        "241_1.obj",
+        "D41C_CL.obj",
+        "D41C_CV.obj",
+        "D41C_F.obj",
+        "D41C_I.obj",
+        "D41C_L.obj"
+      ],
+      "R": [
+        "D41R_Canal.obj",
+        "D41R_Raiz.obj"
+      ],
+      "N": [
+        "D41N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": -2.804865191249998,
+        "y": -23.509471792046742,
+        "z": 0.0007410661810730864
+      }
+    },
+    "42": {
+      "C": [
+        "460.obj",
+        "460_1.obj",
+        "466.obj",
+        "466_1.obj",
+        "D42C_CL.obj",
+        "D42C_CV.obj",
+        "D42C_F.obj",
+        "D42C_I.obj",
+        "D42C_L.obj"
+      ],
+      "R": [
+        "D42R_Canal.obj",
+        "D42R_Raiz.obj"
+      ],
+      "N": [
+        "D42N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": -9.101433316866556,
+        "y": -23.509471797174022,
+        "z": 0.0007410552856009059
+      }
+    },
+    "43": {
+      "C": [
+        "D43C_CL.obj",
+        "D43C_CV.obj",
+        "D43C_D.obj",
+        "D43C_F.obj",
+        "D43C_I.obj",
+        "D43C_L.obj",
+        "D43C_M.obj",
+        "D43C_V.obj"
+      ],
+      "R": [
+        "D43R_Canal.obj",
+        "D43R_Raiz.obj"
+      ],
+      "N": [
+        "D43N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": -16.02676379483049,
+        "y": -23.643318584171666,
+        "z": 0.08526534323243833
+      }
+    },
+    "44": {
+      "C": [
+        "D44C_B.obj",
+        "D44C_CL.obj",
+        "D44C_CV.obj",
+        "D44C_D.obj",
+        "D44C_DV.obj",
+        "D44C_L.obj",
+        "D44C_M.obj",
+        "D44C_MV.obj",
+        "D44C_O.obj",
+        "D44C_V.obj"
+      ],
+      "R": [
+        "D44R_Canal.obj",
+        "D44R_Raiz.obj"
+      ],
+      "N": [
+        "D44N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": -23.986977141942734,
+        "y": -23.577413538174753,
+        "z": -0.17146663603600748
+      }
+    },
+    "45": {
+      "C": [
+        "D45C_ACL.obj",
+        "D45C_B.obj",
+        "D45C_CL.obj",
+        "D45C_CUV.obj",
+        "D45C_D.obj",
+        "D45C_DV.obj",
+        "D45C_L.obj",
+        "D45C_M.obj",
+        "D45C_MV.obj",
+        "D45C_O.obj",
+        "D45C_V.obj"
+      ],
+      "R": [
+        "D45R_Canal.obj",
+        "D45R_Raiz.obj"
+      ],
+      "N": [
+        "D45N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": -32.05097160358564,
+        "y": -22.107736735905764,
+        "z": -0.4925709036430318
+      }
+    },
+    "46": {
+      "C": [
+        "D46C_B.obj",
+        "D46C_CDL.obj",
+        "D46C_CDV.obj",
+        "D46C_CL.obj",
+        "D46C_CML.obj",
+        "D46C_CMV.obj",
+        "D46C_D.obj",
+        "D46C_L.obj",
+        "D46C_M.obj",
+        "D46C_O.obj",
+        "D46C_V.obj"
+      ],
+      "R": [
+        "D46R_Canal.obj",
+        "D46R_Raiz.obj"
+      ],
+      "N": [
+        "D46N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": -41.8072205218748,
+        "y": -22.056947489487396,
+        "z": 0.028071234778608394
+      }
+    },
+    "47": {
+      "C": [
+        "D47C_B.obj",
+        "D47C_CDL.obj",
+        "D47C_CDV.obj",
+        "D47C_CL.obj",
+        "D47C_CML.obj",
+        "D47C_CMV.obj",
+        "D47C_D.obj",
+        "D47C_L.obj",
+        "D47C_M.obj",
+        "D47C_O.obj",
+        "D47C_V.obj"
+      ],
+      "R": [
+        "D47R_Canal.obj",
+        "D47R_Raiz.obj"
+      ],
+      "N": [
+        "D47N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": -53.400274405586806,
+        "y": -21.18821944453367,
+        "z": -0.004890721129783396
+      }
+    },
+    "48": {
+      "C": [
+        "515.obj",
+        "515_1.obj",
+        "518.obj",
+        "518_1.obj",
+        "D48C_B.obj",
+        "D48C_CDL.obj",
+        "D48C_CDV.obj",
+        "D48C_CML.obj",
+        "D48C_CMV.obj",
+        "D48C_FCL.obj",
+        "D48C_L.obj",
+        "D48C_O.obj",
+        "D48C_V.obj"
+      ],
+      "R": [
+        "D48R_Canal.obj",
+        "D48R_Raiz.obj"
+      ],
+      "N": [
+        "D48N_NUC.obj"
+      ],
+      "position_hint": {
+        "x": -64.21602732930337,
+        "y": -21.197560517376036,
+        "z": 0.016351440560239357
+      }
+    }
+  },
+  "notes": {
+    "ignored_files": [
+      "IMP11_ABU.obj",
+      "IMP11_IMP.obj"
+    ],
+    "numeric_candidates": [
+      "237.obj",
+      "237_1.obj",
+      "241.obj",
+      "241_1.obj",
+      "460.obj",
+      "460_1.obj",
+      "466.obj",
+      "466_1.obj",
+      "515.obj",
+      "515_1.obj",
+      "518.obj",
+      "518_1.obj",
+      "544.obj",
+      "544_1.obj",
+      "547.obj",
+      "547_1.obj",
+      "598.obj",
+      "598_1.obj",
+      "601.obj",
+      "601_1.obj",
+      "608.obj",
+      "608_1.obj",
+      "611.obj",
+      "611_1.obj"
+    ],
+    "sections": {
+      "C": "Coroa (crown) faces/patches",
+      "R": "Raiz (root) + Canal",
+      "N": "Núcleo/NUC (internal core)"
+    },
+    "numeric_assignments": {
+      "237.obj": {
+        "tooth": "41",
+        "center": {
+          "x": -4.483462749742994,
+          "y": -21.390412162331973,
+          "z": 0.10853384247409736
+        },
+        "distance": 2.7054986158352587
+      },
+      "237_1.obj": {
+        "tooth": "41",
+        "center": {
+          "x": -4.691240640978019,
+          "y": -17.956760942935944,
+          "z": 0.0931411094445365
+        },
+        "distance": 5.865112776338103
+      },
+      "241.obj": {
+        "tooth": "41",
+        "center": {
+          "x": -1.1681274771690369,
+          "y": -21.325063821041223,
+          "z": 0.17715747543990615
+        },
+        "distance": 2.735264389038691
+      },
+      "241_1.obj": {
+        "tooth": "41",
+        "center": {
+          "x": -0.8468824944769343,
+          "y": -17.936598638693493,
+          "z": 0.0854207981449006
+        },
+        "distance": 5.907434475407542
+      },
+      "460.obj": {
+        "tooth": "42",
+        "center": {
+          "x": -7.496578722289114,
+          "y": -21.325063821041223,
+          "z": 0.17715747543990615
+        },
+        "distance": 2.7163061736904734
+      },
+      "460_1.obj": {
+        "tooth": "42",
+        "center": {
+          "x": -7.175335710247357,
+          "y": -17.936598638693493,
+          "z": 0.08542079814490085
+        },
+        "distance": 5.896943097028127
+      },
+      "466.obj": {
+        "tooth": "42",
+        "center": {
+          "x": -10.811936341080012,
+          "y": -21.390412162331973,
+          "z": 0.10853384247409736
+        },
+        "distance": 2.725408889842065
+      },
+      "466_1.obj": {
+        "tooth": "42",
+        "center": {
+          "x": -11.019696275393168,
+          "y": -17.956760942935944,
+          "z": 0.0931411094445365
+        },
+        "distance": 5.875446228061084
+      },
+      "515.obj": {
+        "tooth": "48",
+        "center": {
+          "x": -67.92580032348633,
+          "y": -20.4923152923584,
+          "z": -0.034891843661573475
+        },
+        "distance": 3.7765609183431943
+      },
+      "515_1.obj": {
+        "tooth": "48",
+        "center": {
+          "x": -68.3610292162214,
+          "y": -16.7448194367545,
+          "z": -0.0575106383415859
+        },
+        "distance": 6.083863852874119
+      },
+      "518.obj": {
+        "tooth": "48",
+        "center": {
+          "x": -60.152649879455566,
+          "y": -20.215325355529785,
+          "z": -0.03489184366157349
+        },
+        "distance": 4.180723392820509
+      },
+      "518_1.obj": {
+        "tooth": "48",
+        "center": {
+          "x": -59.74348790305002,
+          "y": -16.743073088782175,
+          "z": -0.05309255128413802
+        },
+        "distance": 6.312756104816241
+      },
+      "544.obj": {
+        "tooth": "38",
+        "center": {
+          "x": 67.91367530822754,
+          "y": -20.4923152923584,
+          "z": -0.03489184366157351
+        },
+        "distance": 3.7765726464202714
+      },
+      "544_1.obj": {
+        "tooth": "38",
+        "center": {
+          "x": 68.34889657156808,
+          "y": -16.7448194367545,
+          "z": -0.05751063834158587
+        },
+        "distance": 6.083866789205226
+      },
+      "547.obj": {
+        "tooth": "38",
+        "center": {
+          "x": 60.14050006866455,
+          "y": -20.215325355529785,
+          "z": -0.034891843661573455
+        },
+        "distance": 4.1807358882787895
+      },
+      "547_1.obj": {
+        "tooth": "38",
+        "center": {
+          "x": 59.7313449042184,
+          "y": -16.743073088782175,
+          "z": -0.05309255128413802
+        },
+        "distance": 6.312760387195607
+      },
+      "598.obj": {
+        "tooth": "31",
+        "center": {
+          "x": 1.1559775923237656,
+          "y": -21.325063821041223,
+          "z": 0.1771574754399061
+        },
+        "distance": 2.7352647403275494
+      },
+      "598_1.obj": {
+        "tooth": "31",
+        "center": {
+          "x": 0.8347334399198493,
+          "y": -17.936598638693493,
+          "z": 0.08542079814490082
+        },
+        "distance": 5.907434394791986
+      },
+      "601.obj": {
+        "tooth": "31",
+        "center": {
+          "x": 4.4713127005333995,
+          "y": -21.390412162331973,
+          "z": 0.10853384247409734
+        },
+        "distance": 2.705498149620446
+      },
+      "601_1.obj": {
+        "tooth": "31",
+        "center": {
+          "x": 4.679092270632585,
+          "y": -17.956760942935944,
+          "z": 0.0931411094445365
+        },
+        "distance": 5.865113074626464
+      },
+      "608.obj": {
+        "tooth": "32",
+        "center": {
+          "x": 7.484433347528631,
+          "y": -21.325063821041223,
+          "z": 0.17715747543990612
+        },
+        "distance": 2.7163053671533914
+      },
+      "608_1.obj": {
+        "tooth": "32",
+        "center": {
+          "x": 7.163186525305112,
+          "y": -17.936598638693493,
+          "z": 0.08542079814490082
+        },
+        "distance": 5.896943895653858
+      },
+      "611.obj": {
+        "tooth": "32",
+        "center": {
+          "x": 10.799756854188209,
+          "y": -21.390412162331973,
+          "z": 0.10853384247409742
+        },
+        "distance": 2.725388337492995
+      },
+      "611_1.obj": {
+        "tooth": "32",
+        "center": {
+          "x": 11.007549305756887,
+          "y": -17.956760942935944,
+          "z": 0.0931411094445365
+        },
+        "distance": 5.87544615304514
+      }
+    }
+  }
+}

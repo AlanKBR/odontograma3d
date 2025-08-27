@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Odontograma 3D</title>
+    <link rel="stylesheet" href="/static/css/styles.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <header>
+  <h1>Odontograma 3D - Dual View</h1>
+  <div class="spacer"></div>
+  <button id="btn-clear" title="Limpar todas as marcas">Limpar marcas</button>
+  <div class="status" id="status">Carregando…</div>
+    </header>
+
+    <main id="app">
+      <div class="viewport" id="viewport-vestibular">
+        <div class="label">Vista Vestibular</div>
+      </div>
+      <div class="viewport" id="viewport-oclusal">
+        <div class="label">Vista Oclusal/Lingual</div>
+      </div>
+    </main>
+
+    <section id="legend" aria-label="Legenda dos eixos">
+      <small>
+        Legenda eixos (AxesHelper):
+        <span class="axis-x">X = Vermelho</span> ·
+        <span class="axis-y">Y = Verde</span> ·
+        <span class="axis-z">Z = Azul</span>
+      </small>
+    </section>
+
+    <footer>
+      <small>Clique em qualquer ponto do dente para marcar; a marca aparece nas duas vistas.</small>
+    </footer>
+
+    <script type="module" src="/static/js/app.js"></script>
+  </body>
+</html>
