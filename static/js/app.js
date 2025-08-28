@@ -6,19 +6,46 @@ import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 // Depuração: alterna a exibição de helpers (ex.: AxesHelper). Defina false para desativar.
 const isDebugMode = true;
 
+// Espaçamento vertical entre linhas no Gráfico 2D Consolidado (em unidades de cena)
+const CHART_VERTICAL_SPACING = 1;
+// Offset específico entre o bloco superior (linhas 1-2) e o bloco inferior (linhas 3-4) no gráfico 2D
+const CHART_SUP_INF_OFFSET = 10;
+// Offset vertical entre arcadas (superior e inferior) nas cenas principais
+// Define a distância total entre as arcadas; valores aplicados são simétricos (+/- metade)
+const ARCH_VERTICAL_OFFSET = 40;
+
+// Offset vertical adicional para implantes nos dentes inferiores (Gráfico 2D)
+// Edite este valor para ajustar manualmente a altura relativa dos implantes inferiores
+const IMPLANT_LOWER_Y_OFFSET = 3;
+
 const statusEl = document.getElementById('status');
 const btnClear = document.getElementById('btn-clear');
+const btnToggle3D = document.getElementById('btn-toggle-3d');
 // Four viewport containers from HTML
 const viewVestUp = document.getElementById('viewport-vest-up');
 const viewVestLow = document.getElementById('viewport-vest-low');
 const viewOcluUp = document.getElementById('viewport-oclu-up');
 const viewOcluLow = document.getElementById('viewport-oclu-low');
+// Fifth consolidated 2D chart viewport
+const viewChart = document.getElementById('viewport-chart');
 
 // Two scenes to allow different transforms per view; geometries/materials are shared
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0b0f14);
 const sceneOclu = new THREE.Scene();
 sceneOclu.background = new THREE.Color(0x0b0f14);
+// Fifth scene (orthographic consolidated chart)
+const sceneChart = new THREE.Scene();
+sceneChart.background = new THREE.Color(0x0b0f14);
+// Basic lights for chart scene
+const hemiC = new THREE.HemisphereLight(0xffffff, 0x202020, 0.9);
+sceneChart.add(hemiC);
+const dirC1 = new THREE.DirectionalLight(0xffffff, 0.9);
+dirC1.position.set(50, 80, 100);
+sceneChart.add(dirC1);
+const dirC2 = new THREE.DirectionalLight(0xffffff, 0.5);
+dirC2.position.set(-60, -40, -80);
+sceneChart.add(dirC2);
 // Arch subgroups to selectively render upper/lower per viewport
 const vestUpperGroup = new THREE.Group();
 vestUpperGroup.name = 'vest-upper-group';
@@ -34,11 +61,10 @@ ocluLowerGroup.name = 'oclu-lower-group';
 sceneOclu.add(ocluUpperGroup);
 sceneOclu.add(ocluLowerGroup);
 
-// Fixed absolute Y offsets per arch (top of native coordinates)
-// Per request: upper Y = -20, lower Y = 20
+// Offsets absolutos em Y por arcada; derivados de ARCH_VERTICAL_OFFSET
 const archOffsets = {
-  upperY: -20,
-  lowerY: 20,
+  get upperY() { return -ARCH_VERTICAL_OFFSET / 2; },
+  get lowerY() { return  ARCH_VERTICAL_OFFSET / 2; },
 };
 
 function applyArchOffsets() {
@@ -88,16 +114,36 @@ camVestLow.position.copy(camVestUp.position);
 camOcluUp.position.copy(camVestUp.position);
 camOcluLow.position.copy(camVestUp.position);
 
+// Orthographic camera for consolidated chart
+const camChart = new THREE.OrthographicCamera(-100, 100, 100, -100, 0.1, 5000);
+camChart.position.set(0, 0, 1000);
+camChart.lookAt(0, 0, 0);
+// Show both layers so vestibular rows include roots; occlusal rows hide via visibility flags
+camChart.layers.enable(0);
+camChart.layers.enable(1);
+
 // Renderers (one per viewport)
-const rendererVestUp = new THREE.WebGLRenderer({ antialias: true });
-const rendererVestLow = new THREE.WebGLRenderer({ antialias: true });
-const rendererOcluUp = new THREE.WebGLRenderer({ antialias: true });
-const rendererOcluLow = new THREE.WebGLRenderer({ antialias: true });
-[rendererVestUp, rendererVestLow, rendererOcluUp, rendererOcluLow].forEach(r => r.setPixelRatio(Math.min(window.devicePixelRatio, 2)));
-viewVestUp.appendChild(rendererVestUp.domElement);
-viewVestLow.appendChild(rendererVestLow.domElement);
-viewOcluUp.appendChild(rendererOcluUp.domElement);
-viewOcluLow.appendChild(rendererOcluLow.domElement);
+const rendererOpts = { antialias: true, powerPreference: 'high-performance', alpha: false, preserveDrawingBuffer: false };
+const rendererVestUp = new THREE.WebGLRenderer(rendererOpts);
+const rendererVestLow = new THREE.WebGLRenderer(rendererOpts);
+const rendererOcluUp = new THREE.WebGLRenderer(rendererOpts);
+const rendererOcluLow = new THREE.WebGLRenderer(rendererOpts);
+const rendererChart = new THREE.WebGLRenderer(rendererOpts);
+[rendererVestUp, rendererVestLow, rendererOcluUp, rendererOcluLow, rendererChart].forEach(r => r.setPixelRatio(Math.min(window.devicePixelRatio, 2)));
+// Attach only chart initially; others attach lazily on toggle
+if (viewChart) viewChart.appendChild(rendererChart.domElement);
+
+let conventionalViewsAttached = false;
+function attachConventionalViewRenderers() {
+  if (conventionalViewsAttached) return;
+  viewVestUp.appendChild(rendererVestUp.domElement);
+  viewVestLow.appendChild(rendererVestLow.domElement);
+  viewOcluUp.appendChild(rendererOcluUp.domElement);
+  viewOcluLow.appendChild(rendererOcluLow.domElement);
+  conventionalViewsAttached = true;
+  // Re-run resize to size new canvases
+  resize();
+}
 
 // Controls per viewport
 const controlsVestUp = new OrbitControls(camVestUp, rendererVestUp.domElement);
@@ -116,26 +162,38 @@ function resize() {
   const rVL = viewVestLow.getBoundingClientRect();
   const rOU = viewOcluUp.getBoundingClientRect();
   const rOL = viewOcluLow.getBoundingClientRect();
-  rendererVestUp.setSize(rVU.width, rVU.height, false);
-  rendererVestLow.setSize(rVL.width, rVL.height, false);
-  rendererOcluUp.setSize(rOU.width, rOU.height, false);
-  rendererOcluLow.setSize(rOL.width, rOL.height, false);
-  camVestUp.aspect = rVU.width / Math.max(1, rVU.height);
-  camVestLow.aspect = rVL.width / Math.max(1, rVL.height);
-  camOcluUp.aspect = rOU.width / Math.max(1, rOU.height);
-  camOcluLow.aspect = rOL.width / Math.max(1, rOL.height);
-  camVestUp.updateProjectionMatrix();
-  camVestLow.updateProjectionMatrix();
-  camOcluUp.updateProjectionMatrix();
-  camOcluLow.updateProjectionMatrix();
+  // Size only if attached/visible
+  if (rendererVestUp.domElement.parentElement) rendererVestUp.setSize(rVU.width, rVU.height, false);
+  if (rendererVestLow.domElement.parentElement) rendererVestLow.setSize(rVL.width, rVL.height, false);
+  if (rendererOcluUp.domElement.parentElement) rendererOcluUp.setSize(rOU.width, rOU.height, false);
+  if (rendererOcluLow.domElement.parentElement) rendererOcluLow.setSize(rOL.width, rOL.height, false);
+  if (rendererVestUp.domElement.parentElement) { camVestUp.aspect = rVU.width / Math.max(1, rVU.height); camVestUp.updateProjectionMatrix(); }
+  if (rendererVestLow.domElement.parentElement) { camVestLow.aspect = rVL.width / Math.max(1, rVL.height); camVestLow.updateProjectionMatrix(); }
+  if (rendererOcluUp.domElement.parentElement) { camOcluUp.aspect = rOU.width / Math.max(1, rOU.height); camOcluUp.updateProjectionMatrix(); }
+  if (rendererOcluLow.domElement.parentElement) { camOcluLow.aspect = rOL.width / Math.max(1, rOL.height); camOcluLow.updateProjectionMatrix(); }
+
+  if (viewChart) {
+    const rCH = viewChart.getBoundingClientRect();
+    rendererChart.setSize(rCH.width, rCH.height, false);
+    updateChartCameraFrustum(rCH.width, rCH.height);
+  }
 }
-window.addEventListener('resize', resize);
+// Debounced resize to avoid repeated layout thrash on window resizes
+let resizeRAF = 0;
+window.addEventListener('resize', () => {
+  if (resizeRAF) cancelAnimationFrame(resizeRAF);
+  resizeRAF = requestAnimationFrame(() => {
+    resizeRAF = 0;
+    resize();
+  });
+});
 
 // Raycasters
 const raycasterVestUp = new THREE.Raycaster();
 const raycasterVestLow = new THREE.Raycaster();
 const raycasterOcluUp = new THREE.Raycaster();
 const raycasterOcluLow = new THREE.Raycaster();
+const raycasterChart = new THREE.Raycaster();
 
 // Tooth registry
 const toothGroups = new Map(); // toothId -> THREE.Group (vestibular)
@@ -147,14 +205,6 @@ const BLUE = { r: 30 / 255, g: 144 / 255, b: 1.0 }; // dodgerblue
 const PURPLE = { r: 153 / 255, g: 50 / 255, b: 204 / 255 }; // purple for part coloring
 
 // Debug palette removed for per-arch colors; keep neutral base grey only
-
-function getUVPixel(uv, canvas) {
-  const u = uv.x;
-  const v = uv.y;
-  const x = Math.floor(u * canvas.width);
-  const y = Math.floor((1 - v) * canvas.height); // flip V
-  return { x, y };
-}
 
 function ensureVertexColors(geometry) {
   const g = geometry;
@@ -222,16 +272,24 @@ function screenToNDC(event, renderer) {
   return new THREE.Vector2(x, y);
 }
 
+function getRoots(which) {
+  return (
+    which === 'vest-up' ? [vestUpperGroup]
+    : which === 'vest-low' ? [vestLowerGroup]
+    : which === 'oclu-up' ? [ocluUpperGroup]
+  : which === 'oclu-low' ? [ocluLowerGroup]
+  : which === 'chart' ? [chartRoot]
+  : [vestUpperGroup, vestLowerGroup, ocluUpperGroup, ocluLowerGroup]
+  );
+}
+
 function setupPicking(renderer, camera, raycaster, which) {
   renderer.domElement.addEventListener('pointerdown', (ev) => {
     // Only left click paints a single face
     if (ev.button !== 0) return;
     const ndc = screenToNDC(ev, renderer);
     raycaster.setFromCamera(ndc, camera);
-    const roots = which === 'vest-up' ? [vestUpperGroup]
-      : which === 'vest-low' ? [vestLowerGroup]
-      : which === 'oclu-up' ? [ocluUpperGroup]
-      : [ocluLowerGroup];
+    const roots = getRoots(which);
     const hits = raycaster.intersectObjects(roots, true);
     if (hits.length > 0) {
       const hit = hits[0];
@@ -243,12 +301,18 @@ function setupPicking(renderer, camera, raycaster, which) {
         statusEl.textContent = `Parte colorida: ${label}`;
       }
     }
-  });
+  }, { passive: true });
 }
-setupPicking(rendererVestUp, camVestUp, raycasterVestUp, 'vest-up');
-setupPicking(rendererVestLow, camVestLow, raycasterVestLow, 'vest-low');
-setupPicking(rendererOcluUp, camOcluUp, raycasterOcluUp, 'oclu-up');
-setupPicking(rendererOcluLow, camOcluLow, raycasterOcluLow, 'oclu-low');
+// Attach pickers for each viewport
+const viewConfigs = [
+  { which: 'vest-up', renderer: rendererVestUp, camera: camVestUp, raycaster: raycasterVestUp, controls: controlsVestUp },
+  { which: 'vest-low', renderer: rendererVestLow, camera: camVestLow, raycaster: raycasterVestLow, controls: controlsVestLow },
+  { which: 'oclu-up', renderer: rendererOcluUp, camera: camOcluUp, raycaster: raycasterOcluUp, controls: controlsOcluUp },
+  { which: 'oclu-low', renderer: rendererOcluLow, camera: camOcluLow, raycaster: raycasterOcluLow, controls: controlsOcluLow },
+  // Chart: static camera; provide a stub controls object for the painter to toggle
+  { which: 'chart', renderer: rendererChart, camera: camChart, raycaster: raycasterChart, controls: { enabled: true, update(){/* no-op */} } },
+];
+viewConfigs.forEach(v => setupPicking(v.renderer, v.camera, v.raycaster, v.which));
 
 // Right-click paint mode: if started over a tooth, freeze camera and paint while moving
 function setupPainter(renderer, camera, raycaster, which, controls) {
@@ -256,17 +320,10 @@ function setupPainter(renderer, camera, raycaster, which, controls) {
   // prevent context menu on right-click over canvas
   renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
 
-  const getRoots = () => (
-    which === 'vest-up' ? [vestUpperGroup]
-    : which === 'vest-low' ? [vestLowerGroup]
-    : which === 'oclu-up' ? [ocluUpperGroup]
-    : [ocluLowerGroup]
-  );
-
   const paintAtEvent = (ev) => {
     const ndc = screenToNDC(ev, renderer);
     raycaster.setFromCamera(ndc, camera);
-  const hits = raycaster.intersectObjects(getRoots(), true);
+  const hits = raycaster.intersectObjects(getRoots(which), true);
     if (hits.length > 0) {
       const h = hits[0];
       if (h.faceIndex != null) {
@@ -279,7 +336,7 @@ function setupPainter(renderer, camera, raycaster, which, controls) {
     if (ev.button !== 2) return; // only right button
     const ndc = screenToNDC(ev, renderer);
     raycaster.setFromCamera(ndc, camera);
-  const hits = raycaster.intersectObjects(getRoots(), true);
+  const hits = raycaster.intersectObjects(getRoots(which), true);
     // Start painting only if clicking over a tooth; otherwise let OrbitControls pan
     if (hits.length > 0) {
       painting = true;
@@ -305,10 +362,7 @@ function setupPainter(renderer, camera, raycaster, which, controls) {
   renderer.domElement.addEventListener('pointerup', stopPainting);
   renderer.domElement.addEventListener('pointerleave', stopPainting);
 }
-setupPainter(rendererVestUp, camVestUp, raycasterVestUp, 'vest-up', controlsVestUp);
-setupPainter(rendererVestLow, camVestLow, raycasterVestLow, 'vest-low', controlsVestLow);
-setupPainter(rendererOcluUp, camOcluUp, raycasterOcluUp, 'oclu-up', controlsOcluUp);
-setupPainter(rendererOcluLow, camOcluLow, raycasterOcluLow, 'oclu-low', controlsOcluLow);
+viewConfigs.forEach(v => setupPainter(v.renderer, v.camera, v.raycaster, v.which, v.controls));
 
 // Load manifest and then load all permanent teeth (Step 5)
 async function loadManifest() {
@@ -382,6 +436,29 @@ const OCLU_REL_OFFSETS = {
   },
 };
 
+// --- Component type detection from OBJ filename ---
+function parseComponentTypeFromFilename(fname) {
+  const s = String(fname || '').toLowerCase();
+  if (/(implante|implant)/i.test(s)) return 'implante';
+  if (/canal/i.test(s)) return 'canal';
+  if (/raiz|raíz/i.test(s)) return 'raiz';
+  if (/\bnu[cç]/i.test(s)) return 'nucleo';
+  // Heuristics by section letter if present (e.g., D11R_*, D11N_*, D11C_*)
+  // Prioritize explicit matches above; fall back by prefix
+  if (/\b[a-z]:?\/|^/.test(s)) {
+    // no-op for paths, just keep fallbacks below
+  }
+  // Section letter after tooth code: D\d\d([CRN])_
+  const m = s.match(/^d\d{2}([crn])_/i);
+  if (m) {
+    const sec = m[1].toLowerCase();
+    if (sec === 'r') return 'raiz';
+    if (sec === 'n') return 'nucleo';
+    if (sec === 'c') return 'dente';
+  }
+  return 'dente';
+}
+
 function applyOcclusalTransform(toothId, pivot) {
   const setKey = getToothSet(toothId);
   const abs = OCLU_ABS_ROT_DEG[setKey] || OCLU_ABS_ROT_DEG.UNKNOWN;
@@ -405,6 +482,25 @@ function computeCrownBox(root) {
   root.updateWorldMatrix(true, true);
   root.traverse((node) => {
   if (node.isMesh && (node.layers.mask & 1)) { // crowns only (layer 0)
+      const geo = node.geometry;
+      if (!geo) return;
+      if (!geo.boundingBox) geo.computeBoundingBox();
+      const bb = geo.boundingBox.clone();
+      bb.applyMatrix4(node.matrixWorld);
+      if (!has) { box.copy(bb); has = true; } else { box.union(bb); }
+    }
+  });
+  return has ? box : null;
+}
+
+// Compute bounding box for meshes of a specific component type within a subtree
+function computeComponentBox(root, type) {
+  const box = new THREE.Box3();
+  let has = false;
+  const desired = String(type || '').toLowerCase();
+  root.updateWorldMatrix(true, true);
+  root.traverse((node) => {
+    if (node.isMesh && String(node.userData?.type || '').toLowerCase() === desired) {
       const geo = node.geometry;
       if (!geo) return;
       if (!geo.boundingBox) geo.computeBoundingBox();
@@ -446,19 +542,61 @@ function cloneNodeForOclu(node) {
   return nodeClone;
 }
 
+// Filtered clone for oclusal/lingual views: skip roots/canals/implants meshes entirely
+function cloneNodeForOcluFiltered(node, predicateMeshInclude) {
+  // If it's a Mesh, decide directly
+  if (node.isMesh) {
+    if (!predicateMeshInclude(node)) return null;
+    const meshClone = new THREE.Mesh(node.geometry, node.material);
+    meshClone.name = node.name;
+    meshClone.position.copy(node.position);
+    meshClone.quaternion.copy(node.quaternion);
+    meshClone.scale.copy(node.scale);
+    meshClone.layers.mask = node.layers.mask;
+    meshClone.userData = { ...node.userData };
+    return meshClone;
+  }
+  // Non-mesh: clone shallow and process children; drop if no child included
+  const nodeClone = node.clone(false);
+  nodeClone.name = node.name;
+  nodeClone.userData = { ...node.userData };
+  nodeClone.position.copy(node.position);
+  nodeClone.quaternion.copy(node.quaternion);
+  nodeClone.scale.copy(node.scale);
+  for (const child of node.children) {
+    const c = cloneNodeForOcluFiltered(child, predicateMeshInclude);
+    if (c) nodeClone.add(c);
+  }
+  nodeClone.layers.mask = node.layers.mask;
+  // If this node ended up childless and isn't a mesh, drop it
+  if (nodeClone.children.length === 0) return null;
+  return nodeClone;
+}
+
 async function loadTooth(toothId, manifest) {
   const entry = manifest.teeth[toothId];
   if (!entry) throw new Error(`Tooth ${toothId} não encontrado no manifesto`);
   const group = new THREE.Group();
   group.name = `tooth-${toothId}`;
 
+  // Carregar todas as partes (Coroa, Raiz, Canal e Núcleo); a visibilidade padrão é controlada pelo menu 2D
+  const crowns = entry.C || [];
+  const roots = entry.R || [];
+  const nuclei = entry.N || [];
   const parts = [
-    ...(entry.C || []),
-    ...(entry.R || []),
-    ...(entry.N || []),
+    ...crowns,
+    ...roots,   // inclui Raiz e Canal
+    ...nuclei,  // inclui Núcleo
   ];
 
-  const baseMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, metalness: 0, vertexColors: true, side: THREE.DoubleSide });
+  // Reuse a small pool of materials keyed by basic parameters to reduce allocations
+  const baseMatKey = 'std:vc:rough1:metal0:double';
+  const materialCache = loadTooth._matCache || (loadTooth._matCache = new Map());
+  let baseMaterial = materialCache.get(baseMatKey);
+  if (!baseMaterial) {
+    baseMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, metalness: 0, vertexColors: true, side: THREE.DoubleSide });
+    materialCache.set(baseMatKey, baseMaterial);
+  }
 
   // Load sequentially to keep it simple; can be parallelized if needed
   for (const fname of parts) {
@@ -468,10 +606,12 @@ async function loadTooth(toothId, manifest) {
       obj.userData.partName = fname;
       obj.traverse((node) => {
         if (node.isMesh) {
-          const mat = baseMaterial.clone();
-          node.material = mat; // per-mesh material clone
+          // Use a material instance per mesh when possible; clone only if uniforms differ
+          node.material = baseMaterial;
           ensureVertexColors(node.geometry);
           node.userData.partName = fname;
+          // Tag component type for visibility filtering in consolidated chart
+          node.userData.type = parseComponentTypeFromFilename(fname);
           // Keep neutral base color (no per-arch coloring)
           node.castShadow = false;
           node.receiveShadow = false;
@@ -497,8 +637,13 @@ async function loadTooth(toothId, manifest) {
   // Build and add occlusal/lingual clone group with requested rotations
   const ocluGroup = new THREE.Group();
   ocluGroup.name = `tooth-${toothId}-oclu`;
+  // Clone only needed parts for oclusal: exclude roots, canals and implants
+  const includeMesh = (mesh) => {
+    const t = String(mesh.userData?.type || '').toLowerCase();
+    return t !== 'raiz' && t !== 'canal' && t !== 'implante';
+  };
   group.children.forEach((child) => {
-    const c = cloneNodeForOclu(child);
+    const c = cloneNodeForOcluFiltered(child, includeMesh);
     if (c) ocluGroup.add(c);
   });
   // Compute center to rotate around tooth center, not world origin
@@ -519,14 +664,7 @@ async function loadTooth(toothId, manifest) {
   ocluGroup.position.sub(center);
   pivot.position.copy(center);
   pivot.add(ocluGroup);
-  // Hide roots in occlusal clone
-  pivot.traverse((n) => {
-    if (n.isMesh) {
-      const p = n.userData?.partName || '';
-      const isRoot = /\bR_/i.test(p) || /Raiz|Canal/i.test(p);
-      if (isRoot) n.visible = false;
-    }
-  });
+  // No roots/canals/implants are cloned for oclusal; nothing to hide
   // Apply simplified absolute + relative transform (keeps position)
   applyOcclusalTransform(toothId, pivot);
   toothGroupsOclu.set(toothId, pivot);
@@ -571,86 +709,7 @@ function colorPart(root, color) {
   });
 }
 
-function frameScene(camera, controls) {
-  const box = new THREE.Box3().setFromObject(scene);
-  if (!box.isEmpty()) {
-    const size = box.getSize(new THREE.Vector3()).length();
-    const center = box.getCenter(new THREE.Vector3());
-    const fitHeightDistance = size / (2 * Math.tan((Math.PI * camera.fov) / 360));
-    const fitWidthDistance = fitHeightDistance / camera.aspect;
-    const distance = Math.max(fitHeightDistance, fitWidthDistance) * 1.2;
-    camera.position.copy(center).add(new THREE.Vector3(distance, distance * 0.4, distance));
-    camera.lookAt(center);
-    camera.updateProjectionMatrix();
-    if (controls) {
-      controls.target.copy(center);
-      controls.update();
-    }
-  }
-}
-
-function frameSceneTopPlan(camera, controls) {
-  // Enquadra em vista de planta (olhando do +Y pro centro), mantendo Z como up
-  const box = new THREE.Box3().setFromObject(sceneOclu);
-  if (!box.isEmpty()) {
-    const size = box.getSize(new THREE.Vector3());
-    const center = box.getCenter(new THREE.Vector3());
-    const radius = Math.max(size.x, size.z) * 0.6;
-    const distance = radius / Math.tan((Math.PI * camera.fov) / 360);
-    camera.position.set(center.x, center.y + distance * 1.2, center.z);
-    camera.lookAt(center);
-    camera.updateProjectionMatrix();
-    if (controls) {
-      controls.target.copy(center);
-      controls.update();
-    }
-  }
-}
-
-function frameSceneFront(sceneRef, camera, controls) {
-  // Enquadra a cena alinhando a câmera ao longo do eixo Z (frontal)
-  const box = new THREE.Box3().setFromObject(sceneRef);
-  if (!box.isEmpty()) {
-    const size = box.getSize(new THREE.Vector3());
-    const center = box.getCenter(new THREE.Vector3());
-    const halfY = size.y * 0.5;
-    const halfX = size.x * 0.5;
-    const vFOV = (Math.PI * camera.fov) / 360; // fov/2 em radianos
-    let distH = halfY / Math.tan(vFOV);
-    let distW = halfX / (Math.tan(vFOV) * Math.max(0.0001, camera.aspect));
-    const distance = Math.max(distH, distW) * 1.2;
-  camera.up.set(0, 1, 0);
-  camera.position.set(center.x, center.y, center.z + distance); // posição em +Z para ver de frente
-    camera.lookAt(center);
-    camera.updateProjectionMatrix();
-    if (controls) {
-      controls.target.copy(center);
-      controls.update();
-    }
-  }
-}
-
-function frameGroupFront(group, camera, controls) {
-  const box = new THREE.Box3().setFromObject(group);
-  if (!box.isEmpty()) {
-    const size = box.getSize(new THREE.Vector3());
-    const center = box.getCenter(new THREE.Vector3());
-    const halfY = size.y * 0.5;
-    const halfX = size.x * 0.5;
-    const vFOV = (Math.PI * camera.fov) / 360;
-    let distH = halfY / Math.tan(vFOV);
-    let distW = halfX / (Math.tan(vFOV) * Math.max(0.0001, camera.aspect));
-    const distance = Math.max(distH, distW) * 1.25;
-    camera.up.set(0, 1, 0);
-    camera.position.set(center.x, center.y, center.z + distance);
-    camera.lookAt(center);
-    camera.updateProjectionMatrix();
-    if (controls) {
-      controls.target.copy(center);
-      controls.update();
-    }
-  }
-}
+// Removed unused framing helpers; we keep a single origin-centered framing function below
 
 // Frame cameras so that the view is centered at the world origin (0,0,0)
 function frameSceneToOrigin(sceneRef, camera, controls) {
@@ -682,6 +741,343 @@ function reframeAll() {
   frameSceneToOrigin(sceneOclu, camOcluLow, controlsOcluLow);
 }
 
+// -------- Consolidated 2D Chart (Orthographic) --------
+// Root group for chart rows
+const chartRoot = new THREE.Group();
+chartRoot.name = 'chart-root';
+sceneChart.add(chartRoot);
+
+// Utility: clone a node, but share geometry and material refs for color sync
+function cloneShareGeoMat(node) {
+  const nodeClone = node.clone(false);
+  nodeClone.name = node.name;
+  nodeClone.userData = { ...node.userData };
+  if (node.isMesh) {
+    const meshClone = new THREE.Mesh(node.geometry, node.material);
+    meshClone.name = node.name;
+    meshClone.position.copy(node.position);
+    meshClone.quaternion.copy(node.quaternion);
+    meshClone.scale.copy(node.scale);
+    meshClone.layers.mask = node.layers.mask;
+    meshClone.visible = node.visible;
+    meshClone.userData = { ...node.userData };
+    return meshClone;
+  }
+  nodeClone.position.copy(node.position);
+  nodeClone.quaternion.copy(node.quaternion);
+  nodeClone.scale.copy(node.scale);
+  node.children.forEach((child) => {
+    const c = cloneShareGeoMat(child);
+    if (c) nodeClone.add(c);
+  });
+  nodeClone.layers.mask = node.layers.mask;
+  nodeClone.visible = node.visible;
+  return nodeClone;
+}
+
+let chartRows = null; // will hold the four row groups
+
+function buildConsolidatedChart() {
+  chartRoot.clear();
+  // Create four row groups by cloning from existing scene roots
+  const rowVestUp = cloneShareGeoMat(vestUpperGroup);
+  rowVestUp.name = 'chart-row-vest-up';
+  const rowOcluUp = cloneShareGeoMat(ocluUpperGroup);
+  rowOcluUp.name = 'chart-row-oclu-up';
+  const rowOcluLow = cloneShareGeoMat(ocluLowerGroup);
+  rowOcluLow.name = 'chart-row-oclu-low';
+  const rowVestLow = cloneShareGeoMat(vestLowerGroup);
+  rowVestLow.name = 'chart-row-vest-low';
+  chartRows = [rowVestUp, rowOcluUp, rowOcluLow, rowVestLow];
+  chartRows.forEach(g => chartRoot.add(g));
+  layoutChartRows();
+  // Reaplicar filtros de visibilidade do menu (se existirem)
+  if (typeof window !== 'undefined' && window.ComponentVisibility?.apply) {
+    window.ComponentVisibility.apply();
+  }
+}
+
+function getWorldBox(obj) {
+  obj.updateWorldMatrix(true, true);
+  return new THREE.Box3().setFromObject(obj);
+}
+
+// -------- Implant prototype (from tooth 11) and chart placement --------
+let implantProtoPivot = null; // centered pivot with child meshes tagged as implante
+
+async function loadImplantPrototype() {
+  // Load both parts of tooth 11 implant and build a centered pivot group
+  const files = ['IMP11_ABU.obj', 'IMP11_IMP.obj'];
+  const raw = new THREE.Group(); raw.name = 'implant-proto-raw';
+  for (const f of files) {
+    try {
+      const obj = await objLoader.loadAsync(f);
+      obj.userData.partName = f;
+      obj.traverse((n) => {
+        if (n.isMesh) {
+          // Share the base material to keep costs down
+          const baseMatKey = 'std:vc:rough1:metal0:double';
+          const materialCache = loadTooth._matCache || (loadTooth._matCache = new Map());
+          let baseMaterial = materialCache.get(baseMatKey);
+          if (!baseMaterial) {
+            baseMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, metalness: 0, vertexColors: true, side: THREE.DoubleSide });
+            materialCache.set(baseMatKey, baseMaterial);
+          }
+          n.material = baseMaterial;
+          ensureVertexColors(n.geometry);
+          n.userData.partName = f;
+          n.userData.type = 'implante';
+        }
+      });
+      raw.add(obj);
+    } catch (e) {
+      console.warn('Implant load failed', f, e);
+    }
+  }
+  if (raw.children.length === 0) return null;
+  // Center raw at its bounding box center inside a pivot
+  const bb = getWorldBox(raw);
+  const center = bb.getCenter(new THREE.Vector3());
+  const pivot = new THREE.Group();
+  pivot.name = 'implant-proto-pivot';
+  raw.position.sub(center);
+  pivot.add(raw);
+  // Determine main axis of the implant from its local AABB extents
+  const size = bb.getSize(new THREE.Vector3());
+  let protoAxis = new THREE.Vector3(0, 1, 0);
+  if (size.x >= size.y && size.x >= size.z) protoAxis.set(1, 0, 0);
+  else if (size.y >= size.x && size.y >= size.z) protoAxis.set(0, 1, 0);
+  else protoAxis.set(0, 0, 1);
+  pivot.userData.protoAxis = protoAxis.clone().normalize();
+  implantProtoPivot = pivot;
+  return pivot;
+}
+
+function findToothGroupInChart(toothId) {
+  let found = null;
+  chartRoot.traverse((n) => {
+    if (!found && n.type === 'Group' && n.name === `tooth-${toothId}`) found = n;
+  });
+  return found;
+}
+
+function computeToothDirection(group) {
+  // Direction from crown center toward overall group center approximates root axis
+  const crownBox = computeCrownBox(group);
+  const fullBox = getWorldBox(group);
+  if (!crownBox || fullBox.isEmpty()) return null;
+  const cc = crownBox.getCenter(new THREE.Vector3());
+  const fc = fullBox.getCenter(new THREE.Vector3());
+  const dir = fc.clone().sub(cc);
+  if (dir.lengthSq() < 1e-6) return null;
+  return { crownCenter: cc, dir: dir.normalize() };
+}
+
+function cloneImplantPivotSharing(node) {
+  // Reuse existing helper to share geo/material where possible
+  return cloneShareGeoMat(node);
+}
+
+function placeImplantsOnChart() {
+  if (!implantProtoPivot) return;
+  // Reference using tooth 11 in chart (prefer superior vestibular row)
+  const refToothId = '11';
+  const refGroup = findToothGroupInChart(refToothId) || null;
+  if (!refGroup) return;
+  const ref = computeToothDirection(refGroup);
+  if (!ref) return;
+  const protoAxis = implantProtoPivot.userData?.protoAxis || new THREE.Vector3(0,1,0);
+
+  // Helper: create oriented instance and place near tooth using previous heuristic
+  const createInitialPlaced = (toothGroup, opts = {}) => {
+    const { impOnly = false } = opts;
+    const data = computeToothDirection(toothGroup);
+    if (!data) return null;
+    const { crownCenter, dir } = data;
+    const inst = cloneImplantPivotSharing(implantProtoPivot);
+    // If only the implant (without abutment) is required, prune ABU nodes now
+    if (impOnly) {
+      const toRemove = [];
+      inst.traverse((n) => {
+        if (n.userData?.partName === 'IMP11_ABU.obj') toRemove.push(n);
+      });
+      toRemove.forEach((n) => n.parent && n.parent.remove(n));
+    }
+    const q = new THREE.Quaternion().setFromUnitVectors(protoAxis, dir);
+    inst.quaternion.copy(q);
+    // Heuristic initial offset along axis to get roughly under the crown
+    const full = getWorldBox(toothGroup); const crown = computeCrownBox(toothGroup);
+    let k = 3.0;
+    if (full && crown) {
+      const fullH = full.getSize(new THREE.Vector3()).length();
+      const crownH = crown.getSize(new THREE.Vector3()).length();
+      k = Math.max(2.0, (fullH - crownH) * 0.25);
+    }
+    inst.position.copy(crownCenter).add(dir.clone().multiplyScalar(k));
+    return inst;
+  };
+
+  // Step 1: place for tooth 11 to measure constant deltaY between canal top and implant top
+  const canalRefBox = computeComponentBox(refGroup, 'canal');
+  if (!canalRefBox) return; // no canal => cannot determine constant
+  const instRef = createInitialPlaced(refGroup);
+  if (!instRef) return;
+  instRef.name = `${refGroup.name}-implant`;
+  refGroup.add(instRef);
+  // Compute current delta after initial placement
+  const impRefBox = getWorldBox(instRef);
+  const deltaYConst = impRefBox.max.y - canalRefBox.max.y;
+
+  // Helper to adjust an instance vertically so its top matches canalTop + deltaYConst
+  const adjustInstanceTopTo = (instance, parentGroup, canalTopY, deltaY) => {
+    const box = getWorldBox(instance);
+    const currentTop = box.max.y;
+    const targetTop = canalTopY + deltaY;
+    const dy = targetTop - currentTop;
+    if (Math.abs(dy) < 1e-6) return;
+    // Translate by dy in world-Y: move the instance's center by (0, dy, 0)
+    const center = box.getCenter(new THREE.Vector3());
+    const newCenterWorld = center.clone(); newCenterWorld.y += dy;
+    const centerLocal = parentGroup.worldToLocal(center.clone());
+    const newCenterLocal = parentGroup.worldToLocal(newCenterWorld);
+    const deltaLocal = newCenterLocal.sub(centerLocal);
+    instance.position.add(deltaLocal);
+  };
+
+  // Adjust tooth 11 instance precisely to match the measured constant
+  adjustInstanceTopTo(instRef, refGroup, canalRefBox.max.y, deltaYConst);
+
+  // Step 2: iterate all tooth groups in chart and place/adjust instances
+  const created = [{ inst: instRef, group: refGroup, id: refToothId }];
+  chartRoot.traverse((n) => {
+    if (n.type === 'Group' && /^tooth-\d{2}$/.test(n.name) && n !== refGroup) {
+      const canalBox = computeComponentBox(n, 'canal');
+      if (!canalBox) return; // skip if no canal data
+      const id = (n.name.match(/^tooth-(\d{2})$/) || [null, null])[1] || null;
+      const impOnly = id === '18' || id === '28';
+      const inst = createInitialPlaced(n, { impOnly });
+      if (!inst) return;
+      inst.name = `${n.name}-implant`;
+      n.add(inst);
+      adjustInstanceTopTo(inst, n, canalBox.max.y, deltaYConst);
+      created.push({ inst, group: n, id });
+    }
+  });
+
+  // --- Overrides section (simple and applied after base positioning) ---
+  const translateWorldY = (instance, parentGroup, dy) => {
+    const box = getWorldBox(instance);
+    const center = box.getCenter(new THREE.Vector3());
+    const newCenterWorld = center.clone(); newCenterWorld.y += dy;
+    const centerLocal = parentGroup.worldToLocal(center.clone());
+    const newCenterLocal = parentGroup.worldToLocal(newCenterWorld);
+    const deltaLocal = newCenterLocal.sub(centerLocal);
+    instance.position.add(deltaLocal);
+  };
+
+  // 1) Todos os inferiores: offset -3 em Y (subir no layout atual)
+  created.forEach(({ inst, group, id }) => {
+    if (!id) return;
+    const num = Number(id);
+    const isLower = (31 <= num && num <= 38) || (41 <= num && num <= 48);
+    if (isLower) {
+      translateWorldY(inst, group, IMPLANT_LOWER_Y_OFFSET);
+    }
+  });
+
+  // 2) Remoção do ABU já tratada na criação (impOnly em 18 e 28)
+
+  // 3) Altura do implante do 11 deve ser a mesma do 21 (ajuste 11 para casar com 21)
+  const item11 = created.find(x => x.id === '11');
+  const item21 = created.find(x => x.id === '21');
+  if (item11 && item21) {
+    const top11 = getWorldBox(item11.inst).max.y;
+    const top21 = getWorldBox(item21.inst).max.y;
+    const dy = top21 - top11;
+    if (Math.abs(dy) > 1e-6) {
+      translateWorldY(item11.inst, item11.group, dy);
+    }
+  }
+
+  // Apply current visibility filter so implants follow menu state
+  if (typeof window !== 'undefined' && window.ComponentVisibility?.apply) {
+    window.ComponentVisibility.apply();
+  }
+  return created;
+}
+
+function layoutChartRows() {
+  if (!chartRows) return;
+  // First, center each row around X and Y by subtracting its own center
+  const boxes = chartRows.map(g => getWorldBox(g));
+  boxes.forEach((box, i) => {
+    if (box.isEmpty()) return;
+    const center = box.getCenter(new THREE.Vector3());
+    chartRows[i].position.x -= center.x;
+    chartRows[i].position.y -= center.y;
+    // Keep Z center; Ortho camera will handle depth
+  });
+  // Recompute boxes after centering
+  const boxes2 = chartRows.map(g => getWorldBox(g));
+  const heights = boxes2.map(b => b.isEmpty() ? 0 : (b.max.y - b.min.y));
+  // Spacings: 1-2 and 3-4 use CHART_VERTICAL_SPACING; between 2-3 uses CHART_SUP_INF_OFFSET
+  const s12 = CHART_VERTICAL_SPACING;
+  const s23 = CHART_SUP_INF_OFFSET;
+  const s34 = CHART_VERTICAL_SPACING;
+  const spacings = [s12, s23, s34];
+  const totalHeight = heights.reduce((a, h) => a + h, 0) + s12 + s23 + s34;
+  let cursor = totalHeight * 0.5; // start from top
+  for (let i = 0; i < chartRows.length; i++) {
+    const h = heights[i];
+    const centerY = cursor - h * 0.5;
+    chartRows[i].position.y += centerY; // they were centered at 0 before
+    cursor -= h + (i < spacings.length ? spacings[i] : 0);
+  }
+  // After arranging, keep chartRoot centered at origin in X and Y
+  const allBox = getWorldBox(chartRoot);
+  if (!allBox.isEmpty()) {
+    const c = allBox.getCenter(new THREE.Vector3());
+    chartRows.forEach(g => { g.position.x -= c.x; g.position.y -= c.y; });
+  }
+}
+
+function updateChartCameraFrustum(w, h) {
+  if (!w || !h) return;
+  // Fit camera to the bounding box of chartRoot with a margin
+  const box = getWorldBox(chartRoot);
+  if (box.isEmpty()) {
+    camChart.left = -w / 2; camChart.right = w / 2;
+    camChart.top = h / 2; camChart.bottom = -h / 2;
+    camChart.updateProjectionMatrix();
+    return;
+  }
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  const margin = 20; // units of scene for padding
+  let viewW = size.x + margin * 2;
+  let viewH = size.y + margin * 2;
+  const aspect = w / Math.max(1, h);
+  const contentAspect = viewW / Math.max(1e-6, viewH);
+  if (aspect > contentAspect) {
+    // Wider viewport, expand width to match aspect
+    viewW = viewH * aspect;
+  } else {
+    // Taller viewport, expand height
+    viewH = viewW / aspect;
+  }
+  const halfW = viewW / 2;
+  const halfH = viewH / 2;
+  camChart.left = -halfW;
+  camChart.right = halfW;
+  camChart.top = halfH;
+  camChart.bottom = -halfH;
+  camChart.near = 0.1;
+  camChart.far = 5000;
+  camChart.position.set(center.x, center.y, 1000);
+  camChart.lookAt(center.x, center.y, 0);
+  camChart.updateProjectionMatrix();
+}
+
 
 function clearMarks() {
   // Remove transient 3D markers
@@ -701,6 +1097,32 @@ function clearMarks() {
 
 btnClear?.addEventListener('click', clearMarks);
 
+// Toggle 3D views (conventional) visibility and lazy attachment
+let conventionalViewsVisible = false;
+function setConventionalViewsVisible(visible) {
+  conventionalViewsVisible = visible;
+  [viewVestUp, viewVestLow, viewOcluUp, viewOcluLow].forEach(el => {
+    if (!el) return;
+    el.classList.toggle('is-hidden', !visible);
+  });
+  if (visible) {
+    attachConventionalViewRenderers();
+    reframeAll();
+    resize();
+  } else {
+    resize();
+  }
+}
+
+btnToggle3D?.addEventListener('click', () => {
+  const next = !conventionalViewsVisible;
+  setConventionalViewsVisible(next);
+  btnToggle3D.textContent = next ? 'Ocultar vistas 3D' : 'Mostrar vistas 3D';
+});
+
+// Inicialmente oculto
+setConventionalViewsVisible(false);
+
 // No offset UI; offsets are fixed in code
 
 
@@ -711,20 +1133,32 @@ function animate() {
   controlsOcluUp.update();
   controlsOcluLow.update();
   // Vestibular Upper
-  vestUpperGroup.visible = true; vestLowerGroup.visible = false;
-  rendererVestUp.render(scene, camVestUp);
+  if (conventionalViewsVisible && rendererVestUp.domElement.parentElement) {
+    vestUpperGroup.visible = true; vestLowerGroup.visible = false;
+    rendererVestUp.render(scene, camVestUp);
+  }
   // Vestibular Lower
-  vestUpperGroup.visible = false; vestLowerGroup.visible = true;
-  rendererVestLow.render(scene, camVestLow);
+  if (conventionalViewsVisible && rendererVestLow.domElement.parentElement) {
+    vestUpperGroup.visible = false; vestLowerGroup.visible = true;
+    rendererVestLow.render(scene, camVestLow);
+  }
   // Oclusal Upper
-  ocluUpperGroup.visible = true; ocluLowerGroup.visible = false;
-  rendererOcluUp.render(sceneOclu, camOcluUp);
+  if (conventionalViewsVisible && rendererOcluUp.domElement.parentElement) {
+    ocluUpperGroup.visible = true; ocluLowerGroup.visible = false;
+    rendererOcluUp.render(sceneOclu, camOcluUp);
+  }
   // Oclusal Lower
-  ocluUpperGroup.visible = false; ocluLowerGroup.visible = true;
-  rendererOcluLow.render(sceneOclu, camOcluLow);
+  if (conventionalViewsVisible && rendererOcluLow.domElement.parentElement) {
+    ocluUpperGroup.visible = false; ocluLowerGroup.visible = true;
+    rendererOcluLow.render(sceneOclu, camOcluLow);
+  }
   // Restore visibility so layout-dependent ops still see all
   vestUpperGroup.visible = true; vestLowerGroup.visible = true;
   ocluUpperGroup.visible = true; ocluLowerGroup.visible = true;
+  // Consolidated Chart
+  if (viewChart) {
+    rendererChart.render(sceneChart, camChart);
+  }
 }
 
 (async () => {
@@ -748,6 +1182,18 @@ function animate() {
   // Apply initial arch offsets (0 by default) and frame all
   applyArchOffsets();
   reframeAll();
+  // Build and layout the consolidated 2D chart now that teeth are loaded and aligned
+  buildConsolidatedChart();
+  // Load implant prototype and place instances on chart for all teeth
+  try {
+    await loadImplantPrototype();
+    placeImplantsOnChart();
+  } catch (e) {
+    console.warn('Implant prototype unavailable or placement failed', e);
+  }
+  // Ensure camera fits chart
+  const rc = viewChart?.getBoundingClientRect();
+  if (rc) updateChartCameraFrustum(rc.width, rc.height);
   } catch (e) {
     console.error(e);
     statusEl.textContent = 'Erro: ' + e.message;
@@ -755,3 +1201,31 @@ function animate() {
     animate();
   }
 })();
+
+// -------- Visibility control API (chart-only) --------
+// Expose a global function for the UI menu to call
+if (typeof window !== 'undefined') {
+  window.setComponentTypeVisibility = function setComponentTypeVisibility(type, isVisible) {
+    // Only affect consolidated chart meshes
+    const desired = String(type || '').toLowerCase();
+    chartRoot.traverse((n) => {
+      if (n.isMesh && n.userData && n.userData.type) {
+        const t = String(n.userData.type).toLowerCase();
+        if (t === desired) {
+          n.visible = !!isVisible;
+        }
+      }
+    });
+    // Optionally hide empty part groups if all children are invisible
+    chartRoot.traverse((n) => {
+      if (!n.isMesh && n.children && n.children.length) {
+        let anyVisible = false;
+        for (const c of n.children) { if (c.visible) { anyVisible = true; break; } }
+        // Do not force-hide top-level rows; only per-part groups (those that came from OBJ)
+        if (n.userData && n.userData.partName) {
+          n.visible = anyVisible;
+        }
+      }
+    });
+  };
+}

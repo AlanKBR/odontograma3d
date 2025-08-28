@@ -6,7 +6,10 @@
   <meta name="description" content="Odontograma 3D interativo com vistas vestibular e oclusal/lingual em quatro painéis." />
   <meta name="keywords" content="odontograma, 3D, three.js, dentes, oclusal, vestibular, odontologia" />
     <title>Odontograma 3D</title>
-    <link rel="stylesheet" href="/static/css/styles.css" />
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <link rel="dns-prefetch" href="//unpkg.com">
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  <link rel="stylesheet" href="/static/css/noscript.css" />
     <script type="importmap">
       {
         "imports": {
@@ -17,27 +20,48 @@
     </script>
   </head>
   <body>
+    <noscript>
+      <p class="nojs">Este aplicativo requer JavaScript para funcionar.</p>
+    </noscript>
     <header>
   <h1>Odontograma 3D - Dual View</h1>
   <div class="spacer"></div>
+  <button id="btn-toggle-3d" title="Mostrar/ocultar vistas 3D">Mostrar vistas 3D</button>
   <button id="btn-clear" title="Limpar todas as marcas">Limpar marcas</button>
   <div class="status" id="status">Carregando…</div>
     </header>
 
     <main id="app" class="grid-2x2">
-      <div class="viewport" id="viewport-vest-up">
+      <!-- Quinta visualização: Gráfico 2D Consolidado (primeiro e grande) -->
+      <div class="viewport viewport--chart" id="viewport-chart">
+        <div class="label">Gráfico 2D Consolidado</div>
+      </div>
+  <div class="viewport is-hidden" id="viewport-vest-up">
         <div class="label">Vestibular • Superior</div>
       </div>
-      <div class="viewport" id="viewport-vest-low">
+  <div class="viewport is-hidden" id="viewport-vest-low">
         <div class="label">Vestibular • Inferior</div>
       </div>
-      <div class="viewport" id="viewport-oclu-up">
+  <div class="viewport is-hidden" id="viewport-oclu-up">
         <div class="label">Oclusal/Lingual • Superior</div>
       </div>
-      <div class="viewport" id="viewport-oclu-low">
+  <div class="viewport is-hidden" id="viewport-oclu-low">
         <div class="label">Oclusal/Lingual • Inferior</div>
       </div>
     </main>
+
+    <!-- Menu de visibilidade (aplica APENAS ao Gráfico 2D Consolidado) -->
+    <aside id="visibility-menu" aria-label="Filtro de componentes visuais">
+      <h2>Visibilidade (2D)</h2>
+      <form id="visibility-form">
+        <label><input type="checkbox" name="vis-dente" data-type="dente" checked> Dente</label>
+        <label><input type="checkbox" name="vis-raiz" data-type="raiz" checked> Raiz</label>
+  <label><input type="checkbox" name="vis-canal" data-type="canal"> Canal</label>
+  <label><input type="checkbox" name="vis-nucleo" data-type="nucleo"> Núcleo</label>
+  <label><input type="checkbox" name="vis-implante" data-type="implante"> Implante</label>
+      </form>
+      <small>Afeta somente o "Gráfico 2D Consolidado".</small>
+    </aside>
 
     <section id="legend" aria-label="Legenda dos eixos">
       <small>
@@ -52,6 +76,7 @@
       <small>Clique em qualquer ponto do dente para marcar; a marca aparece nas duas vistas.</small>
     </footer>
 
-    <script type="module" src="/static/js/app.js"></script>
+  <script type="module" src="/static/js/app.js"></script>
+  <script type="module" src="/static/js/visibility_menu.js"></script>
   </body>
 </html>
