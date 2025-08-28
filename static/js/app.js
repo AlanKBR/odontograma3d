@@ -17,10 +17,14 @@ const ARCH_VERTICAL_OFFSET = 40;
 // Offset vertical adicional para implantes nos dentes inferiores (Gráfico 2D)
 // Edite este valor para ajustar manualmente a altura relativa dos implantes inferiores
 const IMPLANT_LOWER_Y_OFFSET = 3;
+// Export flags for layout extraction (Phase 1)
+const EXPORT_INCLUDE_MESHES = false; // defina true para exportar cada Mesh com transform/bounds
+const EXPORT_ONLY_CHART = true; // defina true para exportar apenas dados do Gráfico 2D
 
 const statusEl = document.getElementById('status');
 const btnClear = document.getElementById('btn-clear');
 const btnToggle3D = document.getElementById('btn-toggle-3d');
+const btnExportLayout = document.getElementById('btn-export-layout');
 // Four viewport containers from HTML
 const viewVestUp = document.getElementById('viewport-vest-up');
 const viewVestLow = document.getElementById('viewport-vest-low');
@@ -281,6 +285,205 @@ function getRoots(which) {
   : which === 'chart' ? [chartRoot]
   : [vestUpperGroup, vestLowerGroup, ocluUpperGroup, ocluLowerGroup]
   );
+}
+
+// -------- Phase 1: Layout extraction (temporary helper) --------
+// Collect final transforms for teeth and key components from the consolidated chart
+function collectLayoutData() {
+  // Helpers
+  const extractWorldTransform = (obj) => {
+    obj.updateWorldMatrix(true, true);
+    const pos = new THREE.Vector3();
+    const quat = new THREE.Quaternion();
+    const scl = new THREE.Vector3();
+    obj.matrixWorld.decompose(pos, quat, scl);
+    const eul = new THREE.Euler().setFromQuaternion(quat, 'XYZ');
+    return {
+      position: { x: pos.x, y: pos.y, z: pos.z },
+      rotation: { x: eul.x, y: eul.y, z: eul.z, order: 'XYZ' },
+      quaternion: { x: quat.x, y: quat.y, z: quat.z, w: quat.w },
+      scale: { x: scl.x, y: scl.y, z: scl.z },
+    };
+  };
+  const extractLocalTransform = (obj) => {
+    obj.updateMatrixWorld(true);
+    const pos = obj.position.clone();
+    const quat = obj.quaternion.clone();
+    const scl = obj.scale.clone();
+    const eul = new THREE.Euler().setFromQuaternion(quat, obj.rotation.order || 'XYZ');
+    return {
+      position: { x: pos.x, y: pos.y, z: pos.z },
+      rotation: { x: eul.x, y: eul.y, z: eul.z, order: obj.rotation.order || 'XYZ' },
+      quaternion: { x: quat.x, y: quat.y, z: quat.z, w: quat.w },
+      scale: { x: scl.x, y: scl.y, z: scl.z },
+    };
+  };
+  const boxToJSON = (box) => ({ min: { x: box.min.x, y: box.min.y, z: box.min.z }, max: { x: box.max.x, y: box.max.y, z: box.max.z } });
+  const firstMeshTypeUnder = (root) => {
+    let t = null;
+    root.traverse((n) => {
+      if (t) return;
+      if (n.isMesh && n.userData?.type) t = String(n.userData.type).toLowerCase();
+    });
+    return t;
+  };
+  const collectParts = (toothGroup) => {
+    const parts = [];
+    toothGroup.traverse((n) => {
+      if (n.userData && n.userData.partName) {
+        const type = firstMeshTypeUnder(n) || null;
+  // Skip implant parts here; implants are exported separately under views.chart.implants
+  if (String(type || '').toLowerCase() === 'implante') return;
+        const wb = getWorldBox(n);
+        const part = {
+          id: n.userData.partName,
+          type,
+          visible: n.visible,
+          layerMask: n.layers?.mask ?? null,
+          transformWorld: extractWorldTransform(n),
+          transformLocal: extractLocalTransform(n),
+          worldBounds: wb && !wb.isEmpty() ? boxToJSON(wb) : null,
+          meshCount: (() => { let c = 0; n.traverse(m => { if (m.isMesh) c++; }); return c; })(),
+        };
+        if (EXPORT_INCLUDE_MESHES) {
+          const meshes = [];
+          n.traverse((m) => {
+            if (!m.isMesh) return;
+            const mb = getWorldBox(m);
+            meshes.push({
+              name: m.name || null,
+              type: String(m.userData?.type || '').toLowerCase() || null,
+              visible: m.visible,
+              layerMask: m.layers?.mask ?? null,
+              transformWorld: extractWorldTransform(m),
+              transformLocal: extractLocalTransform(m),
+              worldBounds: mb && !mb.isEmpty() ? boxToJSON(mb) : null,
+            });
+          });
+          part.meshes = meshes;
+        }
+        parts.push(part);
+      }
+    });
+    return parts;
+  };
+
+  const data = {
+    meta: {
+      version: 3,
+      generatedAt: new Date().toISOString(),
+      note: EXPORT_ONLY_CHART
+        ? 'Auto-gerado (apenas Gráfico 2D) com transformadas em espaço de mundo'
+        : 'Auto-gerado a partir do estado atual das três cenas (vestibular, oclusal, gráfico 2D) com transformadas em espaço de mundo',
+    },
+    views: EXPORT_ONLY_CHART
+      ? { chart: { rows: {}, teeth: {}, implants: {} } }
+      : {
+          vestibular: { upper: { teeth: {} }, lower: { teeth: {} } },
+          oclusal: { upper: { teeth: {} }, lower: { teeth: {} } },
+          chart: { rows: {}, teeth: {}, implants: {} },
+        },
+  };
+
+  // Vestibular: grupos tooth-XX em vestUpperGroup/vestLowerGroup
+  const collectVest = (rootGroup, arcKey) => {
+    rootGroup.children.forEach((g) => {
+      const m = g.name && g.name.match(/^tooth-(\d{2})$/);
+      if (!m) return;
+      const id = m[1];
+      const parts = collectParts(g);
+      const summary = parts.reduce((acc, p) => {
+        const t = p.type || 'desconhecido'; acc[t] = (acc[t] || 0) + 1; return acc;
+      }, {});
+      data.views.vestibular[arcKey].teeth[id] = {
+        transformWorld: extractWorldTransform(g),
+        transformLocal: extractLocalTransform(g),
+        parts,
+        summary,
+      };
+    });
+  };
+  if (!EXPORT_ONLY_CHART) {
+    collectVest(vestUpperGroup, 'upper');
+    collectVest(vestLowerGroup, 'lower');
+  }
+
+  // Oclusal: pivôs tooth-XX-oclu-pivot em ocluUpperGroup/ocluLowerGroup
+  const collectOclu = (rootGroup, arcKey) => {
+    rootGroup.traverse((g) => {
+      const m = g.name && g.name.match(/^tooth-(\d{2})-oclu-pivot$/);
+      if (!m) return;
+      const id = m[1];
+      const parts = collectParts(g);
+      const summary = parts.reduce((acc, p) => {
+        const t = p.type || 'desconhecido'; acc[t] = (acc[t] || 0) + 1; return acc;
+      }, {});
+      data.views.oclusal[arcKey].teeth[id] = {
+        transformWorld: extractWorldTransform(g),
+        transformLocal: extractLocalTransform(g),
+        parts, summary,
+      };
+    });
+  };
+  if (!EXPORT_ONLY_CHART) {
+    collectOclu(ocluUpperGroup, 'upper');
+    collectOclu(ocluLowerGroup, 'lower');
+  }
+
+  // Chart: rows e dentes clonados sob cada row
+  if (Array.isArray(chartRows)) {
+    chartRows.forEach((row) => {
+      data.views.chart.rows[row.name] = extractWorldTransform(row);
+    });
+  }
+  const chartRowNames = new Set(Object.keys(data.views.chart.rows));
+  chartRoot.traverse((g) => {
+    if (!g || g.type !== 'Group') return;
+    const name = g.name || '';
+    // Match vestibular tooth groups (tooth-XX) and occlusal pivots (tooth-XX-oclu-pivot)
+    const m = name.match(/^tooth-(\d{2})(?:-oclu(?:-pivot)?)?$/i);
+    if (!m) return;
+    // Only record direct tooth groups under known chart rows
+    const parentName = g.parent?.name || '';
+    if (!chartRowNames.has(parentName)) return;
+    const id = m[1];
+    const rowName = parentName;
+    if (!data.views.chart.teeth[id]) data.views.chart.teeth[id] = [];
+    data.views.chart.teeth[id].push({
+      inRow: rowName,
+      transformWorld: extractWorldTransform(g),
+      transformLocal: extractLocalTransform(g),
+      parts: collectParts(g),
+    });
+  // Implante (se existir como filho deste grupo), apenas pelo grupo com sufixo '-implant'
+  const imp = g.children.find(c => typeof c.name === 'string' && /-implant$/.test(c.name));
+  if (imp) {
+      if (!data.views.chart.implants[id]) data.views.chart.implants[id] = [];
+      const impParts = []; imp.traverse((n) => { if (n.userData?.partName) impParts.push(n.userData.partName); });
+      data.views.chart.implants[id].push({
+        inRow: rowName,
+        transformWorld: extractWorldTransform(imp),
+        transformLocal: extractLocalTransform(imp),
+        parts: impParts,
+      });
+    }
+  });
+
+  return data;
+}
+
+function downloadJSON(dataObj, filename = 'layout.json') {
+  try {
+    const json = JSON.stringify(dataObj, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.style.display = 'none';
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 0);
+  } catch (e) {
+    console.error('Falha ao criar download do layout.json', e);
+  }
 }
 
 function setupPicking(renderer, camera, raycaster, which) {
@@ -917,6 +1120,25 @@ function placeImplantsOnChart() {
     return inst;
   };
 
+  // Clean any previous implants to avoid duplicates when re-running
+  chartRoot.traverse((g) => {
+    if (g.type === 'Group' && /^tooth-\d{2}(?:-oclu(?:-pivot)?)?$/.test(g.name)) {
+      const toRemove = [];
+      for (const c of g.children) {
+        if (typeof c.name === 'string' && c.name.endsWith('-implant')) {
+          toRemove.push(c); continue;
+        }
+        let hasImplMesh = false;
+        c.traverse((n) => {
+          if (hasImplMesh) return;
+          if (n.isMesh && String(n.userData?.type || '').toLowerCase() === 'implante') hasImplMesh = true;
+        });
+        if (hasImplMesh) toRemove.push(c);
+      }
+      toRemove.forEach((c) => g.remove(c));
+    }
+  });
+
   // Step 1: place for tooth 11 to measure constant deltaY between canal top and implant top
   const canalRefBox = computeComponentBox(refGroup, 'canal');
   if (!canalRefBox) return; // no canal => cannot determine constant
@@ -1096,6 +1318,16 @@ function clearMarks() {
 }
 
 btnClear?.addEventListener('click', clearMarks);
+btnExportLayout?.addEventListener('click', () => {
+  try {
+    const layout = collectLayoutData();
+    downloadJSON(layout, 'layout.json');
+    statusEl.textContent = 'layout.json exportado';
+  } catch (e) {
+    console.error(e);
+    statusEl.textContent = 'Erro ao exportar layout.json';
+  }
+});
 
 // Toggle 3D views (conventional) visibility and lazy attachment
 let conventionalViewsVisible = false;

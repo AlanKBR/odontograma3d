@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Gráfico 2D Consolidado otimizado com Three.js" />
+  <meta name="keywords" content="odontograma, 3D, three.js, webgl, dentes, oclusal, vestibular, odontologia" />
+    <title>Gráfico 2D Consolidado</title>
+    <link rel="preconnect" href="https://unpkg.com" crossorigin>
+    <link rel="dns-prefetch" href="//unpkg.com">
+    <link rel="stylesheet" href="/static/css/styles.css" />
+    <link rel="stylesheet" href="/static/css/noscript.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <header>
+      <h1>Gráfico 2D Consolidado (Otimizado)</h1>
+      <div class="spacer"></div>
+      <a class="button-link" href="/" title="Voltar para a página principal">Voltar</a>
+    </header>
+
+    <main id="chart-app" class="grid-single">
+      <div class="viewport viewport--chart" id="viewport-chart">
+        <div class="label">Gráfico 2D Consolidado</div>
+      </div>
+      <aside id="visibility-menu" aria-label="Filtro de componentes visuais">
+        <h2>Visibilidade</h2>
+        <form id="visibility-form">
+          <label><input type="checkbox" data-type="dente" checked> Dente</label>
+          <label><input type="checkbox" data-type="raiz" checked> Raiz</label>
+          <label><input type="checkbox" data-type="canal"> Canal</label>
+          <label><input type="checkbox" data-type="nucleo"> Núcleo</label>
+          <label><input type="checkbox" data-type="implante"> Implante</label>
+        </form>
+        <small>Afeta somente esta página.</small>
+        <hr />
+        <div class="export-controls">
+          <label for="export-filename">Nome do arquivo</label>
+          <input id="export-filename" type="text" placeholder="odontograma.glb" />
+          <button id="export-glb" type="button">Exportar GLB</button>
+        </div>
+      </aside>
+    </main>
+
+    <script type="module" src="/static/js/chart.js"></script>
+  </body>
+</html>

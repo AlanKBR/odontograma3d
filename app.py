@@ -14,6 +14,23 @@ def index():
     return render_template('index.html')
 
 
+@app.route('/load')
+def load_page():
+    return render_template('load.html')
+
+
+@app.route('/chart')
+def chart_page():
+    # Nova página otimizada do Gráfico 2D Consolidado
+    return render_template('chart.html')
+
+
+@app.route('/novo')
+def novo_page():
+    # Nova página standalone carregando o odontograma.glb
+    return render_template('novo.html')
+
+
 @app.route('/manifest.json')
 def manifest():
     # Serve prebuilt manifest

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Carregar Layout JSON</title>
+    <link rel="stylesheet" href="/static/css/styles.css" />
+    <link rel="stylesheet" href="/static/css/noscript.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <header>
+      <h1>Carregar Layout JSON</h1>
+      <div class="spacer"></div>
+      <a class="button-link" href="/">Voltar</a>
+    </header>
+
+  <main id="load-app" class="grid-2x2">
+      <section class="panel">
+        <h2>Arquivo JSON</h2>
+        <p>Selecione um arquivo layout.json exportado para visualizar.</p>
+        <input type="file" id="json-file" accept="application/json,.json" />
+        <pre id="file-status" class="mono small"></pre>
+      </section>
+
+      <section class="panel" id="status-panel">
+        <h2>Status do carregamento</h2>
+        <div id="status-summary" class="small"></div>
+        <div class="btn-row" style="margin: 8px 0; display:flex; gap:8px;">
+          <button id="btn-clear-log" type="button">Limpar</button>
+          <button id="btn-copy-log" type="button">Copiar</button>
+        </div>
+        <ul id="status-list" class="mono small" style="max-height: 200px; overflow:auto; padding-left: 18px;"></ul>
+      </section>
+
+      <div class="viewport viewport--chart" id="viewport-chart">
+        <div class="label">Gráfico 2D (do JSON)</div>
+      </div>
+
+
+      <aside id="visibility-menu" aria-label="Filtro de componentes visuais">
+        <h2>Visibilidade (2D)</h2>
+        <form id="visibility-form">
+          <label><input type="checkbox" name="vis-dente" data-type="dente" checked> Dente</label>
+          <label><input type="checkbox" name="vis-raiz" data-type="raiz" checked> Raiz</label>
+          <label><input type="checkbox" name="vis-canal" data-type="canal"> Canal</label>
+          <label><input type="checkbox" name="vis-nucleo" data-type="nucleo"> Núcleo</label>
+          <label><input type="checkbox" name="vis-implante" data-type="implante"> Implante</label>
+        </form>
+        <small>Afeta somente esta visualização.</small>
+      </aside>
+    </main>
+
+    <script type="module" src="/static/js/load_viewer.js"></script>
+    <script type="module" src="/static/js/visibility_menu.js"></script>
+  </body>
+</html>
