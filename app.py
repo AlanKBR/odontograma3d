@@ -1,48 +1,30 @@
 from __future__ import annotations
 import os
-from flask import Flask, render_template, send_from_directory
+from flask import Flask, render_template, send_from_directory, redirect
 
 ROOT = os.path.abspath(os.path.dirname(__file__))
-MODELS_DIR = os.path.join(ROOT, 'objetos_separados')
-MANIFEST_PATH = os.path.join(ROOT, 'tooth_manifest.json')
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
 
 @app.route('/')
 def index():
-    return render_template('index.html')
-
-
-@app.route('/load')
-def load_page():
-    return render_template('load.html')
-
-
-@app.route('/chart')
-def chart_page():
-    # Nova página otimizada do Gráfico 2D Consolidado
-    return render_template('chart.html')
+    # Focus the app on the new standalone page
+    return redirect('/novo')
 
 
 @app.route('/novo')
 def novo_page():
-    # Nova página standalone carregando o odontograma.glb
+    # Standalone page loading the consolidated GLB
     return render_template('novo.html')
 
 
 @app.route('/manifest.json')
 def manifest():
-    # Serve prebuilt manifest
+    # Serve prebuilt manifest (kept for compatibility if needed)
     return send_from_directory(
         ROOT, 'tooth_manifest.json', mimetype='application/json'
     )
-
-
-@app.route('/models/<path:filename>')
-def models(filename: str):
-    # Serve OBJ assets from the existing modelos folder without moving them yet
-    return send_from_directory(MODELS_DIR, filename)
 
 
 if __name__ == '__main__':
